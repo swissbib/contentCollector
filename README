@@ -42,5 +42,6 @@ Todo:
    (we are working with online availability)
     -> and refactor this functionality as an additional plugin.
     One can see looking at this example that we developed the component step by step for our purposes.
+- provide a pre-packaged Python deployment with the necessary libraries already included
 
 - .... ideas are welcome!
