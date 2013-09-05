@@ -1,0 +1,124 @@
+<oaiConfiguration>
+    <repository>
+        <sets>
+            <set>
+                <actionFinished>yes</actionFinished>
+                <completeListSize>32440</completeListSize>
+                <cursor/>
+                <dumpDir>{basedir}/data/results_rero</dumpDir>
+                <dumpDirSkipped>{basedir}/data/resultsSkipped_rero</dumpDirSkipped>
+
+                <granularity>YYYY-MM-DD</granularity>
+                <identifier/>
+                <manualUntil>+1</manualUntil>
+                <!--<manualUntil>2013-01-24</manualUntil>-->
+                <metadataPrefix>marcxml</metadataPrefix>
+                <resumptionToken/>
+                <setDescription/>
+                <source>uc</source>
+                <setName/>
+                <setSpec/>
+                <stoppageTime>2013-09-03 22:08:46.758738</stoppageTime>
+                <timestampUTC>2013-09-03</timestampUTC>
+            </set>
+        </sets>
+        <url>http://services.rero.ch/catalog/oai_request</url>
+        <httpproxy/>
+
+    </repository>
+    <processing>
+        <networkPrefix>RERO</networkPrefix>
+        <!--<baseDir>/swissbib/harvesting</baseDir> -->
+
+        <baseDir>/swissbib/harvesting</baseDir>
+        <basedirwebdav>/swissbib/harvesting/rero.webdav</basedirwebdav>
+
+
+
+        <errorLogDir>{basedir}/rundir</errorLogDir>
+        <processLogDir>{basedir}/rundir</processLogDir>
+        <confdir>{basedir}/confdir</confdir>
+        <errorLogFile>rero.error.harvesting.log</errorLogFile>
+        <processLogFile>rero.process.harvesting.log</processLogFile>
+
+        <resumptionTokenLogDir>{basedir}/rundir</resumptionTokenLogDir>
+        <resumptionTokenLogFile>rero.resumptionToken.log</resumptionTokenLogFile>
+        <writeResumptionToken>true</writeResumptionToken>
+
+        <!-- the following tag isn't evaluated in the current version of the code
+        might be relevant once e.g. GND DNB whrere data is only fetched and stored in DB and not send to the CBS system
+        -->
+        <writeHarvestedFiles>true</writeHarvestedFiles>
+
+
+        <mongoHosts>
+
+            <!-- define the database connections -->
+
+        </mongoHosts>
+
+
+        <hashRenderer>HashReroMarcContent</hashRenderer>
+        <prefixSummaryFile>rero</prefixSummaryFile>
+
+        <archiveDir>{basedir}/archive</archiveDir>
+        <resultDir>{basedir}/results</resultDir>
+
+        <skipRecords>false</skipRecords>
+        <logSkippedRecords>false</logSkippedRecords>
+        <debugging>false</debugging>
+
+
+
+        <!-- examples for preprocessing -->
+        <!--for more than one tag: 039#245#260-->
+
+        <!-- exclude special tags which shouldn't be part of the calculated hash value -->
+        <dataTagExcludedFromHash>039</dataTagExcludedFromHash>
+
+        <!-- transform characters we learned are notoriously wrong when delivered by some repositories -->
+        <!-- do this before the well form check is done -->
+        <substituteCharacters>[\x1B|\x1E|\x1F|\x00|\x01|\x02|\x03|\x04|\x05|\x06|\x07|\x08|\x09|\x0B|\x0C|\x0D|\x0E|\x0F|\x10|\x11|\x12|\x13]</substituteCharacters>
+
+        <!--<oaiIdentifierSysNumber>.*?&lt;identifier&gt;oai:test.rero.ch:(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>-->
+        <oaiIdentifierSysNumber>.*?&lt;identifier&gt;(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>
+
+        <tasks>
+           <task name="PersistRecordMongo"/>
+            <!--
+            <task name="RecordDirectToSearchEngine">
+            </task>
+            -->
+        </tasks>
+
+
+        <!-- various mechanisms to fetch the content provided via WebDav -->
+
+        <!-- for file processing-->
+        <!-- examples
+        name of the given path
+        <incomingDir>{basedirwebdav}/incomingrero</incomingDir>
+        basedir plus current day format: yyyy_mm_dd
+        <incomingDir>{basedirwebdav}/##0##</incomingDir>
+        yesterday
+        <incomingDir>{basedirwebdav}/##-1##</incomingDir>
+        current day minus 5 until current day minus 3
+        <incomingDir>{basedirwebdav}/##-5UNTIL-3##</incomingDir>
+        -->
+        <!--<incomingDir>{basedirwebdav}/2013_07_12</incomingDir>  -->
+        <incomingDir>LATEST_PROCESSING</incomingDir>
+        <fileNameSuffix/>
+        <collectedDir/>
+        <clusteringDir/>
+        <nebisSrcDir/>
+        <nebisWorking/>
+
+        <reroWorking>{basedir}/rero-working</reroWorking>
+        <reroSrcDir>{basedir}/rero-src</reroSrcDir>
+        <fileProcessorType>FileWebDavProcessor</fileProcessorType>
+        <storeLatestProc>2013_09_03</storeLatestProc>
+
+
+
+    </processing>
+</oaiConfiguration>

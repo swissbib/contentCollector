@@ -1,0 +1,133 @@
+<oaiProcessingConfiguration>
+
+    <!--
+        more description is work in progress!
+    -->
+  <repository>
+    <sets>
+      <set>
+        <actionFinished>yes</actionFinished>
+        <completeListSize>54243</completeListSize>
+        <cursor/>
+        <dumpDir/>
+        <dumpDirSkipped>{basedir}/data/resultsSkipped_nebis</dumpDirSkipped>
+
+        <granularity/>
+        <identifier/>
+        <manualUntil/>
+        <metadataPrefix/>
+        <resumptionToken/>
+        <setDescription/>
+        <setName/>
+        <setSpec/>
+        <stoppageTime>2013-09-04 15:50:10.530182</stoppageTime>
+        <timestampUTC>2013-09-04</timestampUTC>
+      </set>
+    </sets>
+    <!--url is not relevant (won't be evaluated in the specialized Nebis procedure -->
+    <url>http://opac.nebis.ch/OAI</url>
+      <httpproxy/>
+
+  </repository>
+  <processing>
+      <networkPrefix>NEBIS</networkPrefix>
+      <baseDir>/swissbib/harvesting</baseDir>
+      <basedirwebdav/>
+
+
+      <errorLogDir>{basedir}/rundir</errorLogDir>
+      <processLogDir>{basedir}/rundir</processLogDir>
+      <confdir>{basedir}/confdir</confdir>
+
+      <errorLogFile>nebis.error.harvesting.log</errorLogFile>
+      <processLogFile>nebis.process.harvesting.log</processLogFile>
+
+        <resumptionTokenLogDir>{basedir}/rundir</resumptionTokenLogDir>
+        <resumptionTokenLogFile>nebis.resumptionToken.log</resumptionTokenLogFile>
+        <writeResumptionToken>false</writeResumptionToken>
+
+
+      <!-- the following tag isn't evaluated in the current version of the code
+      might be relevant once e.g. GND DNB whrere data is only fetched and stored in DB and not send to the CBS system
+      -->
+      <writeHarvestedFiles>true</writeHarvestedFiles>
+
+
+      <mongoHosts>
+
+          <mongoHost name="nativeSources">
+              <mongoConnection>mongodb://[user]:[password]@[host]:29017/admin</mongoConnection>
+              <mongoDB>[name of the databases]</mongoDB>
+              <mongoCollections>
+                  <mongoCollection name="sourceDB">[name of the mongo colletions]</mongoCollection>
+
+              </mongoCollections>
+          </mongoHost>
+
+
+          <mongoHost name="we can define more thann one connection">
+              <mongoConnection>mongodb://[user]:[password]@[host]:29017/admin</mongoConnection>
+              <mongoDB>[name of the databases]</mongoDB>
+              <mongoCollections>
+                  <mongoCollection name="sourceDB">[name of the mongo colletions]</mongoCollection>
+
+              </mongoCollections>
+          </mongoHost>
+
+
+      </mongoHosts>
+
+      <archiveDir>{basedir}/archive</archiveDir>
+      <resultDir>{basedir}/results</resultDir>
+      <hashRenderer>HashNebisMarcContent</hashRenderer>
+
+      <!-- brauchen wir bei nebis eigentlich nicht da der filename hier aus dem von
+      Nebis geschickten abgeleitet wird-->
+      <prefixSummaryFile>nebis</prefixSummaryFile>
+
+
+
+      <skipRecords>false</skipRecords>
+      <logSkippedRecords>false</logSkippedRecords>
+      <debugging>false</debugging>
+
+
+      <dataTagExcludedFromHash/>
+      <substituteCharacters/>
+
+      <!--<oaiIdentifierSysNumber>.*?&lt;identifier&gt;aleph-publish:(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>-->
+      <oaiIdentifierSysNumber>.*?&lt;identifier&gt;(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>
+
+
+      <!-- hre we can define the plugins
+      these plugins are called via type name
+      -->
+      <tasks>
+          <task name="PersistRecordMongo"/>
+          <!--
+          <task name="RecordDirectToSearchEngine">
+          </task>
+          -->
+      </tasks>
+
+
+      <!-- Nebis specific configurations-->
+
+      <!-- define the file interface -->
+      <incomingDir>{basedir}/incoming</incomingDir>
+      <!--<incomingDir>{basedir}/inuit</incomingDir>-->
+      <fileNameSuffix>tar.gz</fileNameSuffix>
+      <collectedDir>{basedir}/nebis-collected</collectedDir>
+      <clusteringDir>{basedir}/nebis-clustering</clusteringDir>
+      <nebisSrcDir>{basedir}/nebis-src</nebisSrcDir>
+      <nebisWorking>{basedir}/nebis-working</nebisWorking>
+
+        <reroWorking/>
+        <reroSrcDir/>
+
+
+        
+        <fileProcessorType>FilePushProcessor</fileProcessorType>
+
+  </processing>
+</oaiProcessingConfiguration>

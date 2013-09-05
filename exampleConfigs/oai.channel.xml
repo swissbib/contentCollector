@@ -1,0 +1,79 @@
+<oaiConfiguration>
+    <repository>
+        <sets>
+            <set>
+                <actionFinished>yes</actionFinished>
+                <completeListSize>27848</completeListSize>
+                <cursor/>
+                <dumpDir>{basedir}/data/results_idsbb</dumpDir>
+                <dumpDirSkipped>{basedir}/data/resultsSkipped_idsbb</dumpDirSkipped>
+                <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
+                <identifier/>
+                <manualUntil/>
+                <metadataPrefix>marc21</metadataPrefix>
+                <resumptionToken/>
+                <setDescription/>
+                <setName/>
+                <setSpec>SWISSBIB-FULL-OAI</setSpec>
+                <stoppageTime>2013-09-03 22:46:58.877023</stoppageTime>
+                <timestampUTC>2013-09-03T20:10:53Z</timestampUTC>
+            </set>
+        </sets>
+        <url>http://aleph.unibas.ch/OAI</url>
+        <httpproxy/>
+
+    </repository>
+    <processing>
+        <networkPrefix>IDSBB</networkPrefix>
+        <baseDir>/swissbib/harvesting</baseDir>
+        <errorLogDir>{basedir}/rundir</errorLogDir>
+        <processLogDir>{basedir}/rundir</processLogDir>
+        <confdir>{basedir}/confdir</confdir>
+        <errorLogFile>idsbb.error.harvesting.log</errorLogFile>
+        <processLogFile>idsbb.process.harvesting.log</processLogFile>
+
+        <resumptionTokenLogDir>{basedir}/rundir</resumptionTokenLogDir>
+        <resumptionTokenLogFile>idsbb.resumptionToken.log</resumptionTokenLogFile>
+        <writeResumptionToken>true</writeResumptionToken>
+
+        <!-- the following tag isn't evaluated in the current version of the code
+        might be relevant once e.g. GND DNB whrere data is only fetched and stored in DB and not send to the CBS system
+        -->
+        <writeHarvestedFiles>true</writeHarvestedFiles>
+
+
+        <mongoHosts>
+
+            <!-- define your data store connection -->
+
+        </mongoHosts>
+
+        <hashRenderer>HashMarcContent</hashRenderer>
+        <prefixSummaryFile>idsbb</prefixSummaryFile>
+
+
+        <archiveDir>{basedir}/archive</archiveDir>
+        <resultDir>{basedir}/results</resultDir>
+
+        <skipRecords>false</skipRecords>
+        <logSkippedRecords>false</logSkippedRecords>
+        <debugging>false</debugging>
+
+
+        <dataTagExcludedFromHash/>
+        <substituteCharacters/>
+
+        <!--<oaiIdentifierSysNumber>.*?&lt;identifier&gt;.*?DSV01-(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>-->
+        <oaiIdentifierSysNumber>.*?&lt;identifier&gt;(.*?)&lt;/identifier&gt;.*</oaiIdentifierSysNumber>
+
+        <tasks>
+            <task name="PersistRecordMongo"/>
+            <!--
+            <task name="RecordDirectToSearchEngine">
+            </task>
+            -->
+        </tasks>
+
+
+    </processing>
+</oaiConfiguration>

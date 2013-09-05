@@ -1,0 +1,46 @@
+
+
+contentCollector is used by swissbib  to collect all the data processed and provided by swissbib.
+
+The procedure of "Collection" is arbitrary and can be done through various channels
+
+Currenly supported are:
+
+1) OAI-Harvesting
+2) Push - mechanism via file interface
+3) Pull mechanism via WebDav
+
+The channel for OAI is based on the Python library for OAI clients (https://pypi.python.org/pypi/pyoai)
+
+
+The main use case for swissbib:
+ - collect the data
+ - make various pre - processing (e.g. skip not well formed XML content)
+ - provide the collected and pre-processed content our data hub (CBS) for further processing using a defined interface
+ (currently this is a simple "file API")
+ The whole process is configurable via XML files.
+
+This main use case could be enhanced via PlugIns
+
+  swissbib developed a plugin to store the pre-processed raw content in a data store. (we are using a Mongo database for this purpose).
+    This gives us the flexibility to access at any time the raw content of the repositories for our purposes.
+    Another possibility could be to handover the raw content into a message queue (like RabbitMQ or Apache ActiveMQ) to push the content reliable into
+     further channels (beside the swissbib CBS data hub)
+
+
+Todo:
+- better modularization of the python code
+        -> better separation inside core functionality
+           and better separation between core functionality and additional tools (e.g. utilities for administration of the data store -> Mongo)
+- better documentation, currently
+    http://www.swissbib.org/wiki/index.php?title=Members:HarvestingInfrastructure
+    http://www.swissbib.org/wiki/index.php?title=Members:UseOfHarvestingInfrastructure
+    (both partially outdated)
+- currently only XML content is processed - could be enhanced
+- remove the code originally developed to skip content delivered by repositories but not suitable for swissbib purposes based on calculated hash-values.
+   Background: Some repositories deliver content we don't want (might happen...) - e.g. the availability status changed but not the underlying bibliographic record
+   (we are working with online availability)
+    -> and refactor this functionality as an additional plugin.
+    One can see looking at this example that we developed the component step by step for our purposes.
+
+- .... ideas are welcome!
