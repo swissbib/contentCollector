@@ -22,7 +22,7 @@ The main use case for swissbib:
 
 This main use case could be enhanced via PlugIns
 
-  swissbib developed a plugin to store the pre-processed raw content in a data store. (we are using a Mongo database for this purpose).
+  swissbib developed a plugin to store the pre-processed raw content into a data store. (we are using a Mongo database for this purpose).
     This gives us the flexibility to access at any time the raw content of the repositories for our purposes.
     Another possibility could be to handover the raw content into a message queue (like RabbitMQ or Apache ActiveMQ) to push the content reliable into
      further channels (beside the swissbib CBS data hub)
