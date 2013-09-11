@@ -37,6 +37,9 @@ import re
 #example read with condition
 #pythonmongo readOAIRecords.py  --config=config.read/config.readMongo.rero.xml  --size=1000 --outDir=/var/swissbib/mongo/exportlocaldbs/rerodeleted --condition='status:newdeleted'
 
+#new: 2013-09-11
+#pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml --condition=$gt#2013-08-05 --size=1000 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
+
 
 #example fix records
 #pythonmongo fixRecords.py --config=config.read/config.readMongo.rero.xml

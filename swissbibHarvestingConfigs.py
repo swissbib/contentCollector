@@ -729,12 +729,15 @@ class HarvestingReadConfigs(HarvestingConfigs):
 
         HarvestingConfigs.__init__(self,filename)
 
+
         self.validTagsReadMongo = ['roottag','sourcePrefixMapping',
                                    'sourceOAIExtension']
 
         for tag in self.validTagsReadMongo:
             try:
-                self.tagsDict[tag] = self.tree.find(".//" + tag).text
+                #we need the tags in validTagsReadMongo only for the export of multiple networks at the same time
+                if not self.tree.find(".//" + tag) is None:
+                    self.tagsDict[tag] = self.tree.find(".//" + tag).text
 
             except AttributeError as aErr:
                 print (aErr)

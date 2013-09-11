@@ -423,9 +423,16 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
     def tokenizeCondition(self,condition):
 
-        splitted = condition.split(":")
+        pTokenCondition = re.compile(':',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
-        dictCondition = {splitted[0] : splitted[1]}
+        searchColon =  pTokenCondition.search(condition)
+        if searchColon:
+            splitted = condition.split(":")
+            dictCondition = {splitted[0] : splitted[1]}
+        else:
+            #we assume a date search with the operators $gt|$lt
+            splitted = condition.split("#")
+            dictCondition = {'datum': {splitted[0] : splitted[1]}}
 
         return dictCondition
 
