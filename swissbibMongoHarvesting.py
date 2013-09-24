@@ -8,6 +8,7 @@ import zlib
 import os
 import re
 from pymongo.binary import Binary
+import time
 
 
 from swissbibUtilities import ErrorMongoProcessing
@@ -266,8 +267,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
             self.prepareMappings()
 
             fileToRead = open(inputFile,"r")
+            outDir = self.checkAndCreateOutDir(outDir)
             outfile = self.defineOutPutFile(outDir)
-            self.checkAndCreateOutDir(outDir)
 
             fileToWrite = open(outfile,"w")
             self.writeHeader(fileToWrite)
@@ -375,8 +376,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
             else:
 
+                outDir = self.checkAndCreateOutDir(outDir)
                 outfile = self.defineOutPutFile(outDir)
-                self.checkAndCreateOutDir(outDir)
                 fileToWrite = open(outfile,"w")
                 self.writeHeader(fileToWrite)
 
@@ -406,6 +407,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
                     if (size > forCompare):
                         self.writeFooter(fileToWrite)
+                        fileToWrite.flush()
                         fileToWrite.close()
                         outfile = self.defineOutPutFile(outDir)
                         fileToWrite = None
@@ -416,6 +418,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
                 if (fileToWrite is not None):
                     self.writeFooter(fileToWrite)
+                    fileToWrite.flush()
                     fileToWrite.close()
 
 
@@ -534,6 +537,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
     def defineOutPutFile(self,outdir):
         prefix = self.appContext.getConfiguration().getNetworkPrefix()
+        time.sleep(5)
         outfile = "".join([outdir,os.sep,str(prefix),
                                     "-","export.",
                                     '{:%Y%m%d%H%M%S}'.format(datetime.now()),
@@ -542,8 +546,12 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
         return outfile
 
     def checkAndCreateOutDir(self,outdir):
+        outdir = "".join([outdir, ".", '{:%Y%m%d%H%M%S}'.format(datetime.now())])
+
         if not os.path.exists(outdir):
             os.makedirs(outdir)
+
+        return outdir
 
 
 

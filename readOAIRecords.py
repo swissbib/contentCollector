@@ -39,6 +39,7 @@ import re
 
 #new: 2013-09-11
 #pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml --condition='$gt#2013-08-05' --size=1000 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
+#pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml  --number=2000 --condition='$gt#2013-08-05' --size=2 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
 
 
 #example fix records
