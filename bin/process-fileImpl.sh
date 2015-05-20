@@ -1,12 +1,17 @@
 #!/bin/sh
 
+DATA_BASE_DIR=/swissbib/harvesting
+CONTENTENV_HOME=/home/harvester/envContentCollector
+VIRTUAL_PYTHON_ENV=${CONTENTENV_HOME}/env
+PROCESS_DIR=${CONTENTENV_HOME}/bin
+RUNDIR=${DATA_BASE_DIR}/rundir
+CONFDIR=${CONTENTENV_HOME}/confdir
+#PROCESS_DIR=/home/harvester/envContentCollector/bin
 
-PROCESS_DIR=/swissbib/harvesting/bin
-RUNDIR=/swissbib/harvesting/rundir
 
 
 CONFFILE=$1
 
 cd ${PROCESS_DIR}
 
-python FileProcessorImpl.py --config=${HOME}/confdir/$CONFFILE >> ${RUNDIR}/processFileImpl.log 2>&1
+${VIRTUAL_PYTHON_ENV}/bin/python  ${PROCESS_DIR}/FileProcessorImpl.py --config=${CONFDIR}/${CONFFILE}  >> ${RUNDIR}/processFileImpl.log 2>&1

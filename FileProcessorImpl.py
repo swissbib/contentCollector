@@ -29,8 +29,6 @@ class FileProcessor(SwissbibPreImportProcessor):
     def __init__(self,context):
 
         SwissbibPreImportProcessor.__init__(self,context)
-        self.pMarcRecord = re.compile("(<record>.*?<metadata>).*?(<leader>.*?)</record>",re.UNICODE | re.DOTALL | re.IGNORECASE)
-        self.pNebisDeleteRecord = re.compile("(<record>.*?</header>).*?</metadata>(</record>)",re.UNICODE | re.DOTALL | re.IGNORECASE)
 
 
 
@@ -60,23 +58,14 @@ class FileProcessor(SwissbibPreImportProcessor):
 
 
     def transformRecordNamespace(self,contentSingleRecord):
+
         #ich muss hier eine Fehlerbehandlung einbauen, wenn die Transformation nicht funktioniert!
 
         #at the moment only Primo records have to be transformed into a namespace, which can be processed by later systems in the chain
         #for our cases it's CBS
 
-        trMarcPattern = ""
-        prMarcRecord = self.pMarcRecord.search(contentSingleRecord)
-
-        if prMarcRecord:
-            #trMarcPattern = prMarcRecord.group(1) + "<marc:record xmlns:marc=\"http://www.loc.gov/MARC21/slim\"  \n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\">" + prMarcRecord.group(2) + "</marc:record>" + prMarcRecord.group(3)
-            trMarcPattern = prMarcRecord.group(1) + "<marc:record xmlns:marc=\"http://www.loc.gov/MARC21/slim\"  \n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\">" + prMarcRecord.group(2) + "</marc:record>" + "</metadata></record>"
-
-            return trMarcPattern
-        else:
-            raise Exception("transformation of namespace wasn't possible - pattern didn't match")
-
-
+        #das muss besser getestet werden
+        return SwissbibPreImportProcessor.transformRecordNamespace(self,contentSingleRecord)
 
 
 

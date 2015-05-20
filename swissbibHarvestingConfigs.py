@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import re
 
-from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo
+from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo
 from swissbibUtilities import MongoHostDefinition
 
 
@@ -41,7 +41,8 @@ class HarvestingConfigs():
                           'tasks','oaiIdentifierSysNumber','httpproxy',
                           'writeHarvestedFiles', 'debugging',
                           'resumptionTokenLogDir','resumptionTokenLogFile',
-                          'writeResumptionToken']
+                          'writeResumptionToken','encodeUnicodeAsUTF8',
+                          'iteratorOAIStructure','transformExLibrisNStructureForCBS']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -123,6 +124,20 @@ class HarvestingConfigs():
 
         self.tagsDict['resumptionTokenLogFile'] = value
 
+    def getEncodeUnicodeAsUTF8(self):
+        if not self.tagsDict['encodeUnicodeAsUTF8'] is None:
+
+            return  not (self.tagsDict['encodeUnicodeAsUTF8']).strip().lower() in ['false','f','n','0','']
+        else:
+            return False
+
+
+    def setEncodeUnicodeAsUTF8(self,value):
+        self._setLXMLTreeNodeValue("encodeUnicodeAsUTF8", value)
+        self.tagsDict['encodeUnicodeAsUTF8'] = value
+
+
+    #encodeUnicodeAsUTF8
 
     def isWriteResumptionToken(self):
         if not self.tagsDict['writeResumptionToken'] is None:
@@ -214,6 +229,28 @@ class HarvestingConfigs():
         #self.tree.find(".//dumpDirSkipped").text = value
         self._setLXMLTreeNodeValue("dumpDirSkipped", value)
         self.tagsDict['dumpDirSkipped'] = value
+
+    def getIteratorOAIStructure(self):
+
+        return self.tagsDict['iteratorOAIStructure']
+
+    def setIteratorOAIStructure(self,value):
+        #self.tree.find(".//dumpDirSkipped").text = value
+        self._setLXMLTreeNodeValue("iteratorOAIStructure", value)
+        self.tagsDict['iteratorOAIStructure'] = value
+
+
+    def isTransformExLibrisNStructureForCBS(self):
+        if not self.tagsDict['transformExLibrisNStructureForCBS'] is None:
+            return  not (self.tagsDict['transformExLibrisNStructureForCBS']).strip().lower() in ['false','f','n','0','']
+        else:
+            return False
+
+    def setTransformExLibrisNStructureForCBS(self,value):
+        self._setLXMLTreeNodeValue("transformExLibrisNStructureForCBS", value)
+        self.tagsDict['transformExLibrisNStructureForCBS'] = value
+
+
 
     def getOaiIdentifierSysNumber(self):
 
@@ -606,14 +643,16 @@ class HarvestingFilesConfigs(HarvestingConfigs):
 
         for tag in self.validTagsNebis:
             try:
-                self.tagsDict[tag] = self.tree.find(".//" + tag).text
+                searchResult = self.tree.find(".//" + tag)
+                if not searchResult is None:
+                    self.tagsDict[tag] = self.tree.find(".//" + tag).text
 
-                if not self.tagsDict[tag] is None :
-                    if re.search("\{basedir\}",self.tagsDict[tag]):
-                        self.tagsDict[tag] =  re.sub("\{basedir\}",self.tagsDict['baseDir'],self.tagsDict[tag])
-                    else:
-                        if re.search("\{basedirwebdav\}",self.tagsDict[tag]):
-                            self.tagsDict[tag] =  re.sub("\{basedirwebdav\}",self.tagsDict['basedirwebdav'],self.tagsDict[tag])
+                    if not self.tagsDict[tag] is None :
+                        if re.search("\{basedir\}",self.tagsDict[tag]):
+                            self.tagsDict[tag] =  re.sub("\{basedir\}",self.tagsDict['baseDir'],self.tagsDict[tag])
+                        else:
+                            if re.search("\{basedirwebdav\}",self.tagsDict[tag]):
+                                self.tagsDict[tag] =  re.sub("\{basedirwebdav\}",self.tagsDict['basedirwebdav'],self.tagsDict[tag])
 
 
             except AttributeError as aErr:

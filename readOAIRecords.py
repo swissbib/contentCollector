@@ -93,4 +93,5 @@ except Exception as pythonBaseException:
     print str(pythonBaseException)
 
 finally:
-    print "process readOAIRecords has finished - look for possible errors"
+    pass
+    #print "process readOAIRecords has finished - look for possible errors"

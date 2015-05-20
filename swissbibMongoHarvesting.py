@@ -7,7 +7,9 @@ import hashlib
 import zlib
 import os
 import re
-from pymongo.binary import Binary
+from bson.binary import Binary
+#from pymongo.binary import Binary
+
 import time
 
 
@@ -686,3 +688,134 @@ class MongoDBHarvestingWrapperFixRecords(MongoDBHarvestingWrapperAdmin):
                 print "record " + recordToDelete + " konnte per regex nicht verarbeitet werden"
 
 
+
+class MongoDBHarvestingWrapperSearch502(MongoDBHarvestingWrapperAdmin):
+
+    def __init__(self,applicationContext=None):
+        self.pSearch502 = re.compile("<(marc:)?datafield *?tag=\"502\".*",re.UNICODE | re.DOTALL | re.IGNORECASE)
+        MongoDBHarvestingWrapper.__init__(self,applicationContext=applicationContext)
+
+
+
+    def read502Records(self,outDir=None,fileSize=None):
+
+        sourceCollection = self.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+
+        outDir = self.checkAndCreateOutDir(outDir)
+        outfile = self.defineOutPutFile(outDir)
+
+        fileToWrite = open(outfile,"w")
+        self.writeHeader(fileToWrite)
+
+
+        #numberDeleted = sourceCollection.find({"status":"deleted"}).count()
+        #numberNewDeleted = sourceCollection.find({"status":"newdeleted"}).count()
+
+        result = sourceCollection.find()
+
+
+        for document in result:
+            recordCompressed = document["record"]
+            record =  zlib.decompress(recordCompressed)
+
+            #f = open("/home/swissbib/temp/trash/idsbb502.xml","r")
+            #text = f.readlines()
+            #f.close()
+            #text = "".join(text)
+            spSearch502 = self.pSearch502.search(record)
+
+            if spSearch502:
+
+                fileToWrite.write(record + "\n")
+
+
+                fileToWrite.flush()
+                statinfo = os.stat(outfile)
+                size = statinfo.st_size
+
+                forCompare = int(fileSize) * 1000000
+
+                if (size > forCompare):
+                    self.writeFooter(fileToWrite)
+                    fileToWrite.flush()
+                    fileToWrite.close()
+                    outfile = self.defineOutPutFile(outDir)
+                    fileToWrite = None
+                    fileToWrite = open(outfile,"w")
+                    self.writeHeader(fileToWrite)
+
+
+        if (fileToWrite is not None):
+            self.writeFooter(fileToWrite)
+            fileToWrite.close()
+
+
+
+class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin):
+
+    def __init__(self,applicationContext=None):
+        MongoDBHarvestingWrapper.__init__(self,applicationContext=applicationContext)
+
+
+
+    def setRegEx(self,regex = None):
+
+        if not regex is None:
+            self.pDefinedRegex = re.compile(regex,re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
+    def readMatchingRecords(self,outDir=None,fileSize=None):
+
+        if self.pDefinedRegex is None:
+            raise  Exception("no Regex defined")
+
+
+        sourceCollection = self.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+
+        outDir = self.checkAndCreateOutDir(outDir)
+        outfile = self.defineOutPutFile(outDir)
+
+        fileToWrite = open(outfile,"w")
+        self.writeHeader(fileToWrite)
+
+
+        #numberDeleted = sourceCollection.find({"status":"deleted"}).count()
+        #numberNewDeleted = sourceCollection.find({"status":"newdeleted"}).count()
+
+        result = sourceCollection.find()
+
+
+        for document in result:
+            recordCompressed = document["record"]
+            record =  zlib.decompress(recordCompressed)
+
+            #f = open("/home/swissbib/temp/trash/idsbb502.xml","r")
+            #text = f.readlines()
+            #f.close()
+            #text = "".join(text)
+            spDefinedRegex = self.pDefinedRegex.search(record)
+
+            if spDefinedRegex:
+
+                fileToWrite.write(record + "\n")
+
+
+                fileToWrite.flush()
+                statinfo = os.stat(outfile)
+                size = statinfo.st_size
+
+                forCompare = int(fileSize) * 1000000
+
+                if (size > forCompare):
+                    self.writeFooter(fileToWrite)
+                    fileToWrite.flush()
+                    fileToWrite.close()
+                    outfile = self.defineOutPutFile(outDir)
+                    fileToWrite = None
+                    fileToWrite = open(outfile,"w")
+                    self.writeHeader(fileToWrite)
+
+
+        if (fileToWrite is not None):
+            self.writeFooter(fileToWrite)
+            fileToWrite.close()

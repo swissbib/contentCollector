@@ -26,6 +26,10 @@ class SwissbibPreImportProcessor:
 
         self.pMetadata = re.compile('<metadata>(.*?)</metadata>',re.UNICODE |  re.DOTALL |re.IGNORECASE)
 
+        self.pMarcRecord = re.compile("(<record>.*?<metadata.*?>).*?(<leader>.*?)</record>",re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.pNebisDeleteRecord = re.compile("(<record>.*?</header>).*?</metadata>(</record>)",re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
     def prepareDeleteRecord(self,recordToDelete):
         #basically nothing to do with the record to be deleted
         return recordToDelete
@@ -58,6 +62,7 @@ class SwissbibPreImportProcessor:
     def parseWellFormed(self,record):
 
         try:
+            #https://mail.python.org/pipermail/python-list/2005-February/337668.html  -> encoding bei Parse
             ParserCreate().Parse(record)
 
         except ExpatError as expatInst:
@@ -187,7 +192,20 @@ class SwissbibPreImportProcessor:
 
 
     def transformRecordNamespace(self,contentSingleRecord):
-        pass
+
+        trMarcPattern = ""
+        prMarcRecord = self.pMarcRecord.search(contentSingleRecord)
+
+        if prMarcRecord:
+            #trMarcPattern = prMarcRecord.group(1) + "<marc:record xmlns:marc=\"http://www.loc.gov/MARC21/slim\"  \n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\">" + prMarcRecord.group(2) + "</marc:record>" + prMarcRecord.group(3)
+            trMarcPattern = prMarcRecord.group(1) + "<marc:record xmlns:marc=\"http://www.loc.gov/MARC21/slim\"  \n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\">" + prMarcRecord.group(2) + "</marc:record>" + "</metadata></record>"
+
+            return trMarcPattern
+        else:
+            raise Exception("transformation of namespace wasn't possible - pattern didn't match")
+
+
+
 
     def initialize(self):
         if not os.path.isdir(self.context.getConfiguration().getArchiveDir()):

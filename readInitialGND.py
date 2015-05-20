@@ -5,7 +5,7 @@ import re
 from swissbibHarvestingConfigs import HarvestingConfigs
 from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 from argparse import ArgumentParser
-from harvestingTasks import PersistRecordMongo
+from harvestingTasks import PersistRecordMongo, PersistInitialDNBGNDRecordMongo
 from Context import StoreNativeRecordContext, TaskContext
 
 from swissbibUtilities import ResultCollector
@@ -67,7 +67,7 @@ if __name__ == '__main__':
             idPattern = re.compile('<controlfield tag="001">(.*?)</controlfield>',re.UNICODE | re.DOTALL | re.IGNORECASE)
             idT = idPattern.search(record)
             if idT:
-                recordId = "oai:d-nb.de/authorities/" + idT.group(1)
+                recordId = "oai:dnb.de/authorities/" + idT.group(1)
 
                 if re.search("status=\"deleted\"",record,re.UNICODE | re.DOTALL):
                     recordDeleted = True
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 for taskName,task  in  sConfigs.getDedicatedTasks().items():
 
 
-                    if isinstance(task,PersistRecordMongo):
+                    if isinstance(task,PersistRecordMongo) or isinstance(task,PersistInitialDNBGNDRecordMongo):
                         taskContext = StoreNativeRecordContext(appContext=appContext,
                                                                 rID=recordId,singleRecord=record,
                                                                 deleted=recordDeleted)

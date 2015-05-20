@@ -456,6 +456,14 @@ class StoreNativeRecordContext(TaskContext):
 
         return self.singleRecord
 
+    #we need this method because in relation to GND (initial loading)
+    #sentences are going to be prepared before storing into Mongo
+    #this is done 'after' creation of the object
+    def setRecord(self, record):
+
+        self.singleRecord = record
+
+
     def isDeleted(self):
 
         return self.deleted

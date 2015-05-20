@@ -25,7 +25,8 @@ from swissbibPreImportProcessor import SwissbibPreImportProcessor
 from harvestingTasks import PersistRecordMongo,PersistDNBGNDRecordMongo
 from Context import StoreNativeRecordContext, TaskContext
 
-from testing import TestContent
+
+import requests
 
 
 
@@ -51,13 +52,15 @@ def retrieveFromUrlWaiting(request,
                 proxy_handler = urllib2.ProxyHandler({'http':config.getProxy()})
             else:
                 proxy_handler = urllib2.ProxyHandler({})
-            opener = urllib2.build_opener(proxy_handler)
+            httpsHandler = urllib2.HTTPSHandler()
+
+            opener = urllib2.build_opener()
             urllib2.install_opener(opener)
 
             #f = urllib2.urlopen(request)
             urlConcatenated = request.get_full_url() + "?" + request.get_data()
             f = urllib2.urlopen(urlConcatenated)
-            text = f.read()
+            text = f.read().encode('utf-8')
 
             #errorLog = open("/swissbib/harvesting/ghrero/rerofile.xml","a")
             #errorLog.write(text)
@@ -86,6 +89,75 @@ def retrieveFromUrlWaiting(request,
 
 
 
+def retrieveFromUrlWaitingRequests(wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT, baseURL=None, params = None, context = None):
+
+    numberOfRequests = 1
+    for i in range(wait_max):
+        try:
+
+            if not context is None and context.getConfiguration().getProxy() is not None:
+                proxies = {
+                  "http": context.getConfiguration().getProxy(),
+                  "https": context.getConfiguration().getProxy(),
+                }
+                result  = requests.get(baseURL,params=params,proxies=proxies)
+            else:
+                #siehe auch hier
+                #http://docs.python-requests.org/en/latest/user/advanced/
+                #ich brauche noch die Unterstützung von Proxies
+                result  = requests.get(baseURL,params=params)
+                #result.encoding = 'ISO-8859-1'
+
+
+            #Background handling requests library https://media.readthedocs.org/pdf/requests/v2.0-0/requests.pdf see encodings
+            #excerpt encoding chapter:
+            #When you receive a response, Requests makes a guess at the encoding to use for decoding the response when you call
+            #the Response.text method. Requests will first check for an encoding in the HTTP header, and if none is present, will use
+            #charade to attempt to guess the encoding. The only time Requests will not do this is if no explicit charset is present in the HTTP headers
+            #and the Content-Type header contains text. In this situation, RFC 2616 specifies that the default charset must be ISO-8859-1 . Requests follows the specification in this case. If you require a different encoding,
+            # you can manually set the Response.encoding property, or use the raw Response.content
+
+            #headers = result.headers
+            #e = result.encoding
+            #text = result.text
+            text = result.content
+            #test = result.encoding
+
+            #mytype = type(contentSingleRecord)
+            #why do we have to do this with Alma content because content from Aleph is signed as unicode too!
+            #but it works!
+            # Encode unicode data as utf-8 if configured.
+            #ab Version 2.3 requests wird scheins ein automatisches encoding angenommen - was da genau passiert muss ich mir noch ansehen
+            if not context is None and  context.getConfiguration().getEncodeUnicodeAsUTF8():
+                text = text.encode('utf-8')
+
+
+
+            break
+
+        except requests.ConnectionError, ex:
+            if not context is None:
+                context.getWriteContext().writeErrorLog(header=["error while trying to connect to remote system (ConnectionError) (total number of requests {0}".format(numberOfRequests)],message=[str(ex)])
+            numberOfRequests += 1
+            continue
+        except requests.Timeout, timeEx:
+            if not context is None:
+                context.getWriteContext().writeErrorLog(header=["error while trying to connect to remote system (TimeOutError) (total number of requests {0}".format(numberOfRequests)],message=[str(ex)])
+            numberOfRequests += 1
+            continue
+        except Exception,ex:
+            if not context is None:
+                context.getWriteContext().writeErrorLog(header=["error while trying to connect to remote system (BaseError) (total number of requests {0}".format(numberOfRequests)],message=[str(ex)])
+            numberOfRequests += 1
+            continue
+
+    else:
+        raise Error, "Waited too often (more than %s times)" % wait_max
+    return text
+
+
+
+
 class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
     def __init__(
@@ -96,9 +168,13 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
         self._day_granularity = dayGranularity
         #self.writeContext = writeContext
 
+        #was ist hier anders als bei Aleph!
         self.pIterSingleRecord = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.pIterSingleRecordNebis = re.compile('<record>.*?</metadata></record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
         self.pResumptionToken = re.compile('<resumptionToken.*?>(.{1,}?)</resumptionToken>',re.UNICODE | re.DOTALL |re.IGNORECASE)
-        self.harvestingErrorPattern = re.compile('<error .*?>.*?</error>',re.UNICODE | re.DOTALL |re.IGNORECASE)
+        self.harvestingErrorPattern = re.compile('(<error.*?>.*?</error>|<html>.*?HTTP.*?Status.*?4\d\d)',re.UNICODE | re.DOTALL |re.IGNORECASE)
 
 
 
@@ -107,12 +183,8 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
 
     def makeRequest(self, **kw):
-        """Actually retrieve XML from the server.
-        """
-        # XXX include From header?
-
         paramDic = copy.deepcopy(kw)
-        paramDic["baseURL"] = self._base_url
+        #paramDic["baseURL"] = self._base_url
 
 
         if kw.get('resumptionToken',None) is None:
@@ -125,9 +197,12 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
         if self._credentials is not None:
             headers['Authorization'] = 'Basic ' + self._credentials.strip()
 
-        request = urllib2.Request(
-            self._base_url, data=urlencode(kw))
-        return retrieveFromUrlWaiting(request,config=self.context.getConfiguration())
+
+        #request = urllib2.Request(
+        #    self._base_url, data=urlencode(kw))
+        #return retrieveFromUrlWaiting(request,config=self.context.getConfiguration())
+        #we switch to the requests module
+        return retrieveFromUrlWaitingRequests(baseURL=self._base_url,params=paramDic,context=self.context)
 
 
     def makeRequestErrorHandling(self, **kw):
@@ -137,13 +212,6 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
             self.context.getResultCollector().setHarvestingParameter(kw)
 
         response = self.makeRequest(**kw)
-        #operation = swissbibUtilities.AdministrationOperation()
-        #response = operation.getTestRecord()
-
-
-
-        #errorP = re.compile('<error .*?>.*?</error>',re.UNICODE | re.DOTALL | re.IGNORECASE)
-        #self.utilities.getHarvestingErrorPattern()
 
         errorInResonse = self.harvestingErrorPattern.search(response)
 
@@ -175,16 +243,58 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
         try:
 
+            #Unicode (short): http://www.carlosble.com/2010/12/understanding-python-and-unicode/
 
             if self.context.getConfiguration().getDebugging():
                 self.context.getWriteContext().writeLog(header=["Debugging harvested Records:"],message=[response])
 
 
-            iterator = self.pIterSingleRecord.finditer(response)
+
+            if not self.context.getConfiguration().getIteratorOAIStructure() is None and self.context.getConfiguration().getIteratorOAIStructure().strip().lower() == 'exlibrisnonalephtype':
+                iterator = self.pIterSingleRecordNebis.finditer(response)
+            else:
+                iterator = self.pIterSingleRecord.finditer(response)
 
             for matchRecord in iterator:
 
                 contentSingleRecord = matchRecord.group()
+
+
+                #already in requests - otherwise parsing of errors isn't possible
+                #mytype = type(contentSingleRecord)
+                #why do we have to do this with Alma content because content from Aleph is signed as unicode too!
+                #but it works!
+                # Encode unicode data as utf-8 if configured.
+                #if self.context.getConfiguration().getEncodeUnicodeAsUTF8():
+                #    contentSingleRecord = contentSingleRecord.encode('utf-8')
+
+
+                if self.context.getConfiguration().isTransformExLibrisNStructureForCBS():
+                    try:
+                        contentSingleRecord = self.transformRecordNamespace(contentSingleRecord)
+
+                    except Exception as transformException:
+                        self.context.getWriteContext().writeErrorLog(header=["error while transforming the namespace structure of record"],message=[str(transformException), contentSingleRecord])
+                        continue
+
+
+                #http://stackoverflow.com/questions/3375238/typeerror-writelines-argument-must-be-a-sequence-of-strings (kann ein bisschen helfen)
+                #http://stackoverflow.com/questions/5141559/unicodeencodeerror-ascii-codec-cant-encode-character-u-xef-in-position-0
+                #http://nedbatchelder.com/text/unipain.html Videos anschauen!
+                #http://stackoverflow.com/questions/19833440/unicodeencodeerror-ascii-codec-cant-encode-character-u-xe9-in-position-7 (Hinweise zu Tutoril)
+                #Alma link
+                #https://eu.alma.exlibrisgroup.com/view/oai/41BIG_INST/OAI-script?verb=ListRecords&metadataPrefix=marc21&set=BIG_Test&from=1999-01-01T00:00:00Z
+
+                #http://www.pythoncentral.io/python-unicode-encode-decode-strings-python-2x/
+
+
+                #gute slides
+                #http://farmdev.com/talks/unicode/
+                #http://blog.etianen.com/blog/2013/10/05/python-unicode-streams/
+
+
+
+                #contentSingleRecord = getTestRecord()
                 recordId = self.getRecordId(contentSingleRecord)
 
                 recordDeleted = self.isDeleteRecord(contentSingleRecord)
@@ -205,6 +315,7 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                     continue
 
 
+
                 if self.context.getConfiguration().isSkipRecords():
                     self._processSkipRecord(contentSingleRecord)
 
@@ -213,6 +324,7 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                 else:
 
                     self.context.getResultCollector().addRecordsToCBSNoSkip(1)
+                    #attention: we use the file.writelines function which needs Strings - no unicode!
                     self.context.getWriteContext().writeItem(contentSingleRecord)
 
 
@@ -342,3 +454,45 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
         return ResumptionListGenerator(firstBatch, nextBatch)
 
+
+
+def getTestRecord ():
+    return """
+    <record>
+        <header>
+            <identifier>oai:aleph.unibas.ch:DSV11-000084670</identifier>
+            <datestamp>2013-11-29T00:19:05Z</datestamp>
+            <setSpec>SWISSBIB-DSV11-OAI</setSpec>
+        </header>
+        <metadata>
+            <marc:record xmlns:marc="http://www.loc.gov/MARC21/slim"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://www.loc.gov/MARC21/slim
+http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">
+                <marc:leader>00370nz a2200097n 4500</marc:leader>
+                <marc:controlfield tag="FMT">AU</marc:controlfield>
+                <marc:controlfield tag="LDR">00370nz a2200097n 4500</marc:controlfield>
+                <marc:controlfield tag="008">990909 az ab n </marc:controlfield>
+                <marc:datafield tag="040" ind1=" " ind2=" ">
+                    <marc:subfield code="a">SzZuIDS BS/BE</marc:subfield>
+                    <marc:subfield code="b">ger</marc:subfield>
+                </marc:datafield>
+                <marc:datafield tag="090" ind1=" " ind2=" ">
+                    <marc:subfield code="a">2638813</marc:subfield>
+                    <marc:subfield code="b">DSV</marc:subfield>
+                </marc:datafield>
+                <marc:datafield tag="110" ind1=" " ind2=" ">
+                    <marc:subfield code="a">Johannes Kepler-Universität (Linz)</marc:subfield>
+                    <marc:subfield code="b">Abteilung für politische soziologie und
+                        Entwicklungsforschung</marc:subfield>
+                </marc:datafield>
+                <marc:datafield tag="667" ind1=" " ind2=" ">
+                    <marc:subfield code="a">Autoritätsaufnahme per Programm erstellt (aus SIBIL
+                        0455425).</marc:subfield>
+                    <marc:subfield code="5">09.09.1999/BED</marc:subfield>
+                </marc:datafield>
+                <marc:controlfield tag="001">000084670</marc:controlfield>
+            </marc:record>
+        </metadata>
+    </record>
+    """
