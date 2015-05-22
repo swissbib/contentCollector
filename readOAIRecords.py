@@ -66,6 +66,8 @@ try:
     oParser.add_argument("-o", "--outDir", dest="outDir",default=None)
     oParser.add_argument("-k", "--condition", dest="condition", default=None)
     oParser.add_argument("-f", "--inputFile", dest="inputFile", default=None)
+    oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
+
 
 
 
@@ -85,6 +87,7 @@ try:
     readWrapper.readRecords(rId=args.idToRead,countToRead=args.countToRead,
                                 fileSize=args.fileSize, outDir=args.outDir,condition=args.condition,
                                 inputFile=args.inputFile,
+                                userDatestamp=args.userDatestamp
 
                             )
 

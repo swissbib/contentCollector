@@ -30,6 +30,7 @@ try:
     oParser.add_argument("-s", "--size", dest="fileSize",default=None)
     oParser.add_argument("-o", "--outDir", dest="outDir",default=None)
     oParser.add_argument("-r", "--regex", dest="regex",default=None)
+    oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
 
 
 
@@ -51,7 +52,7 @@ try:
 
     searchDefinedGeneric.setRegEx(args.regex)
 
-    searchDefinedGeneric.readMatchingRecords(outDir=args.outDir,fileSize=args.fileSize)
+    searchDefinedGeneric.readMatchingRecords(outDir=args.outDir,fileSize=args.fileSize,userDatestamp=args.userDatestamp)
 
 
 

@@ -257,12 +257,16 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
         self.ptagMetadataItem = re.compile("<recordMetadata>(.*?)</recordMetadata>",re.UNICODE | re.DOTALL | re.IGNORECASE)
         self.sourceOAIExtensions = {}
         self.sourceMappings = {}
+        self.userDateStamp = None
+        self.pRecordUserDatestamp = re.compile("(.*?<datestamp>).*?(</datestamp>.*)",re.UNICODE | re.DOTALL | re.IGNORECASE)
+
 
 
 
     def readRecords(self,rId=None,countToRead=None,fileSize=None,outDir=None,condition=None,
-                    inputFile=None):
+                    inputFile=None,userDatestamp=None):
 
+        self.userDateStamp = userDatestamp
 
         if not inputFile is None:
 
@@ -301,7 +305,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                         if document:
                             r = document["record"]
                             #print  zlib.decompress(r)
-                            fileToWrite.write(zlib.decompress(r) + "\n\n")
+                            fileToWrite.write(self.setCustomDatestamp(zlib.decompress(r)) + "\n\n")
 
 
                             fileToWrite.flush()
@@ -355,7 +359,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 document = sourceCollection.find_one({"_id": rId})
                 if document:
                     r = document["record"]
-                    print  zlib.decompress(r)
+                    print  self.setCustomDatestamp(zlib.decompress(r))
                 print "</" + self.appContext.getConfiguration().getRoottag() + ">"
 
             elif (fileSize is None or (fileSize is not None and outDir is None) ):
@@ -372,7 +376,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
                     r = document["record"]
-                    print  zlib.decompress(r)
+
+                    print  self.setCustomDatestamp(zlib.decompress(r))
                     alreadyRead +=1
                 print "</" + self.appContext.getConfiguration.getRoottag() + ">"
 
@@ -397,7 +402,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                     #we don't want to have any linebreaks because it's easier to work with
                     #rNoBreaks =  "".join(wholeRecordUnzipped.splitlines())
                     #fileToWrite.write("".join(zlib.decompress(r).splitlines()) + "\n")
-                    fileToWrite.write(zlib.decompress(r) + "\n")
+                    fileToWrite.write(self.setCustomDatestamp(zlib.decompress(r) + "\n"))
 
 
                     alreadyRead +=1
@@ -548,7 +553,10 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
         return outfile
 
     def checkAndCreateOutDir(self,outdir):
-        outdir = "".join([outdir, ".", '{:%Y%m%d%H%M%S}'.format(datetime.now())])
+        if not outdir[-1] == os.sep:
+            outdir = "".join([outdir,os.sep])
+
+        outdir = "".join([outdir, '{:%Y%m%d%H%M%S}'.format(datetime.now())])
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -629,6 +637,14 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
 
 
+    def setCustomDatestamp(self,record):
+
+        if (not self.userDateStamp is None):
+            sRecord = self.pRecordUserDatestamp.search(record)
+            if (sRecord):
+                return "".join([sRecord.group(1),self.userDateStamp, sRecord.group(2)])
+        else:
+            return record
 
 
 
@@ -764,7 +780,9 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
             self.pDefinedRegex = re.compile(regex,re.UNICODE | re.DOTALL | re.IGNORECASE)
 
 
-    def readMatchingRecords(self,outDir=None,fileSize=None):
+    def readMatchingRecords(self,outDir=None,fileSize=None,userDatestamp=None):
+
+        self.userDateStamp = userDatestamp
 
         if self.pDefinedRegex is None:
             raise  Exception("no Regex defined")
@@ -797,7 +815,7 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
 
             if spDefinedRegex:
 
-                fileToWrite.write(record + "\n")
+                fileToWrite.write(self.setCustomDatestamp(record) + "\n")
 
 
                 fileToWrite.flush()
