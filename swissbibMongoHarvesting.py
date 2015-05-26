@@ -362,24 +362,29 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                     print  self.setCustomDatestamp(zlib.decompress(r))
                 print "</" + self.appContext.getConfiguration().getRoottag() + ">"
 
-            elif (fileSize is None or (fileSize is not None and outDir is None) ):
+            elif (fileSize is None and  outDir is not None):
 
-                print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                print "<" + self.appContext.getConfiguration().getRoottag() + ">"
+                outDir = self.checkAndCreateOutDir(outDir)
+                outfile = self.defineOutPutFile(outDir)
+                fileToWrite = open(outfile,"w")
+                self.writeHeader(fileToWrite)
 
                 if condition is None:
                     result = sourceCollection.find()
                 else:
                     result = sourceCollection.find(self.tokenizeCondition(condition))
                 alreadyRead = 0
+
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
                     r = document["record"]
+                    fileToWrite.write(self.setCustomDatestamp(zlib.decompress(r) + "\n"))
 
-                    print  self.setCustomDatestamp(zlib.decompress(r))
                     alreadyRead +=1
-                print "</" + self.appContext.getConfiguration.getRoottag() + ">"
+                self.writeFooter(fileToWrite)
+                fileToWrite.flush()
+                fileToWrite.close()
 
             else:
 
