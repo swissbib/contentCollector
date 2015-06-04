@@ -17,7 +17,7 @@ CONFDIR=${CONTENTENV_HOME}/confdir
 
 
 #DEFAULTREPOS="snl sbt idsbb idslu idssg1 idssg2 POSTERS zora retroseals abn bgr sgbn"
-DEFAULTREPOS="libib serval ecod snl sbt idsbb idslu idssg1 idssg2 POSTERS zora retroseals abn bgr sgbn"
+DEFAULTREPOS="boris libib serval ecod snl sbt idsbb idslu idssg1 idssg2 POSTERS zora retroseals abn bgr sgbn"
 
 
 if [ -n "$1" ]; then
