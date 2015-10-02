@@ -42,7 +42,8 @@ class HarvestingConfigs():
                           'writeHarvestedFiles', 'debugging',
                           'resumptionTokenLogDir','resumptionTokenLogFile',
                           'writeResumptionToken','encodeUnicodeAsUTF8',
-                          'iteratorOAIStructure','transformExLibrisNStructureForCBS']
+                          'iteratorOAIStructure','transformExLibrisNStructureForCBS',
+                          'oaiDeleteDir']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -475,6 +476,14 @@ class HarvestingConfigs():
         #self.tree.find(".//resultDir").text = value
         self._setLXMLTreeNodeValue("resultDir", value)
         self.tagsDict['resultDir'] = value
+
+    def getOaiDeleteDir(self):
+        return self.tagsDict['oaiDeleteDir']
+
+    def setOaiDeleteDir(self,value):
+        #self.tree.find(".//resultDir").text = value
+        self._setLXMLTreeNodeValue("oaiDeleteDir", value)
+        self.tagsDict['oaiDeleteDir'] = value
 
 
 
