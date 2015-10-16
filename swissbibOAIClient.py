@@ -170,7 +170,10 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
         #was ist hier anders als bei Aleph!
         self.pIterSingleRecord = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
-        self.pIterSingleRecordNebis = re.compile('<record>.*?</metadata></record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #GH: 16.10.2015 this works for Nebis because we are looking for the outer 'shell' of all <record>...</record> not qualified with additional namespaces.
+        #we can use this for deleted as well as for full records. Compare example in exampleContentStructures/alma/deletedAndUpdatedRecords.xml
+        #with Aleph this isn't as easy..  .
+        self.pIterSingleRecordNebis = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
 
         self.pResumptionToken = re.compile('<resumptionToken.*?>(.{1,}?)</resumptionToken>',re.UNICODE | re.DOTALL |re.IGNORECASE)
@@ -268,8 +271,8 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                 #if self.context.getConfiguration().getEncodeUnicodeAsUTF8():
                 #    contentSingleRecord = contentSingleRecord.encode('utf-8')
 
-
-                if self.context.getConfiguration().isTransformExLibrisNStructureForCBS():
+                recordDeleted = self.isDeleteRecord(contentSingleRecord)
+                if self.context.getConfiguration().isTransformExLibrisNStructureForCBS() and not recordDeleted:
                     try:
                         contentSingleRecord = self.transformRecordNamespace(contentSingleRecord)
 
@@ -297,11 +300,9 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                 #contentSingleRecord = getTestRecord()
                 recordId = self.getRecordId(contentSingleRecord)
 
-                recordDeleted = self.isDeleteRecord(contentSingleRecord)
+
                 if recordDeleted:
                     contentSingleRecord = self.prepareDeleteRecord(contentSingleRecord)
-
-                #todo: muss ich hier eine Transformation des namespaces bei einigen sourcen einbauen?
 
                 substituteChars = self.context.getConfiguration().getSubstituteCharacters()
                 if not substituteChars is None:
