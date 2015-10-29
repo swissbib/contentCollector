@@ -173,7 +173,7 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
         #GH: 16.10.2015 this works for Nebis because we are looking for the outer 'shell' of all <record>...</record> not qualified with additional namespaces.
         #we can use this for deleted as well as for full records. Compare example in exampleContentStructures/alma/deletedAndUpdatedRecords.xml
         #with Aleph this isn't as easy..  .
-        self.pIterSingleRecordNebis = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #self.pIterSingleRecordNebis = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
 
         self.pResumptionToken = re.compile('<resumptionToken.*?>(.{1,}?)</resumptionToken>',re.UNICODE | re.DOTALL |re.IGNORECASE)
@@ -253,10 +253,7 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
 
 
-            if not self.context.getConfiguration().getIteratorOAIStructure() is None and self.context.getConfiguration().getIteratorOAIStructure().strip().lower() == 'exlibrisnonalephtype':
-                iterator = self.pIterSingleRecordNebis.finditer(response)
-            else:
-                iterator = self.pIterSingleRecord.finditer(response)
+            iterator = self.pIterSingleRecord.finditer(response)
 
             for matchRecord in iterator:
 
