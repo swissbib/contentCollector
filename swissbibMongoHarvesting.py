@@ -1,5 +1,4 @@
 
-
 from pymongo.connection import Connection
 from datetime import datetime
 import sys
@@ -812,6 +811,8 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
             recordCompressed = document["record"]
             record =  zlib.decompress(recordCompressed)
 
+            record = ''.join(record.splitlines())
+
             #f = open("/home/swissbib/temp/trash/idsbb502.xml","r")
             #text = f.readlines()
             #f.close()
@@ -842,3 +843,4 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
         if (fileToWrite is not None):
             self.writeFooter(fileToWrite)
             fileToWrite.close()
+
