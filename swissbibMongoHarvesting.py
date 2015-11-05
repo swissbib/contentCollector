@@ -781,7 +781,7 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
     def setRegEx(self,regex = None):
 
         if not regex is None:
-            self.pDefinedRegex = re.compile(regex,re.UNICODE | re.DOTALL | re.IGNORECASE)
+            self.pDefinedRegex = re.compile(regex,re.UNICODE | re.DOTALL | re.IGNORECASE | re.MULTILINE)
 
 
     def readMatchingRecords(self,outDir=None,fileSize=None,userDatestamp=None):
@@ -811,13 +811,13 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
             recordCompressed = document["record"]
             record =  zlib.decompress(recordCompressed)
 
-            record = ''.join(record.splitlines())
+            record1 = ''.join(record.splitlines())
 
             #f = open("/home/swissbib/temp/trash/idsbb502.xml","r")
             #text = f.readlines()
             #f.close()
             #text = "".join(text)
-            spDefinedRegex = self.pDefinedRegex.search(record)
+            spDefinedRegex = self.pDefinedRegex.search(record1)
 
             if spDefinedRegex:
 
