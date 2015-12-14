@@ -33,6 +33,12 @@ class SwissbibUtilities():
         self.recordsToCBSInserted = 0
         self.recordsToCBSUpdated = 0
 
+    @staticmethod
+    def addBlockedMessageToLogSummary(procMess,configuration):
+            if configuration.getBlocked():
+                procMess.append("because process is blocked, collected content wasn't sent to CBS - there should be no symbolic link in the results directory")
+            return procMess
+
 
 
     def getStructureHeaderPattern(self):
@@ -299,6 +305,9 @@ class ResultCollector:
         self.recordsToCBSNoSkip = 0
         self.recordsparseError = 0
         self.processedFiles = []
+        self.processedRecordsNoFurtherDetails = 0
+        self.collectedArchiveFiles = {}
+
 
         self.harvestingParameter = None
         self.WrittenToFile = False
@@ -387,6 +396,20 @@ class ResultCollector:
 
     def getProcessedFile(self):
         return self.processedFiles
+
+    def setIncrementProcessedRecordNoFurtherDetails(self):
+        self.processedRecordsNoFurtherDetails += 1
+
+    def getIncrementProcessedRecordNoFurtherDetails(self):
+        return self.processedRecordsNoFurtherDetails
+
+    def getCollectedArchiveFiles(self):
+        return self.collectedArchiveFiles
+
+
+    def setCollectedArchiveFiles(self,fileName, path):
+        self.collectedArchiveFiles[fileName] = path
+
 
 
 class AdministrationOperation:

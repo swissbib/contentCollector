@@ -326,6 +326,7 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                     self.context.getWriteContext().writeItem(contentSingleRecord)
 
 
+                self.context.getResultCollector().setIncrementProcessedRecordNoFurtherDetails()
                 for taskName,task  in  self.context.getConfiguration().getDedicatedTasks().items():
 
                     try:

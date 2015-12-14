@@ -118,16 +118,36 @@ class WriteContext:
         if not self.fileClosed is True:
             self.closeWriteContext()
 
-        os.chdir(self.appContext.getConfiguration().getDumpDir())
-        os.system("mv " + self.appContext.getConfiguration().getSummaryContentFile() + " " + self.appContext.getConfiguration().getArchiveDir())
-        tCommand = "gzip -9 " + self.appContext.getConfiguration().getArchiveDir() + os.sep + self.appContext.getConfiguration().getSummaryContentFile()
-        os.system(tCommand)
+        numberProcessedRecords = self.appContext.getResultCollector().getIncrementProcessedRecordNoFurtherDetails()
+        maxDocuments = self.appContext.getConfiguration().getMaxDocuments()
+        blocked = self.appContext.getConfiguration().getBlocked()
+        #in case the configuration is set to blocked a
 
-        os.chdir(self.appContext.getConfiguration().getResultDir())
-        tCommand = "ln -s " + self.appContext.getConfiguration().getArchiveDir() + os.sep +\
-                   self.appContext.getConfiguration().getSummaryContentFile() + ".gz " +\
-                   self.appContext.getConfiguration().getSummaryContentFile() + ".gz"
-        os.system(tCommand)
+        if (not maxDocuments is None and not numberProcessedRecords is None
+                and  int(numberProcessedRecords) > int(maxDocuments)) \
+                or blocked:
+
+            os.chdir(self.appContext.getConfiguration().getDumpDir())
+            #collected content shouldn't be sent to CBS because number of collected records is too large
+            os.system("mv " + self.appContext.getConfiguration().getSummaryContentFile() + " " + self.appContext.getConfiguration().getArchiveNotSent())
+            tCommand = "gzip -9 " + self.appContext.getConfiguration().getArchiveNotSent() + os.sep + self.appContext.getConfiguration().getSummaryContentFile()
+            os.system(tCommand)
+            if not blocked:
+                self.appContext.getConfiguration().setBlocked('true')
+
+            os.chdir(self.appContext.getConfiguration().getResultDir())
+
+        else:
+            os.chdir(self.appContext.getConfiguration().getDumpDir())
+            os.system("mv " + self.appContext.getConfiguration().getSummaryContentFile() + " " + self.appContext.getConfiguration().getArchiveDir())
+            tCommand = "gzip -9 " + self.appContext.getConfiguration().getArchiveDir() + os.sep + self.appContext.getConfiguration().getSummaryContentFile()
+            os.system(tCommand)
+
+            os.chdir(self.appContext.getConfiguration().getResultDir())
+            tCommand = "ln -s " + self.appContext.getConfiguration().getArchiveDir() + os.sep +\
+                       self.appContext.getConfiguration().getSummaryContentFile() + ".gz " +\
+                       self.appContext.getConfiguration().getSummaryContentFile() + ".gz"
+            os.system(tCommand)
 
         if os.path.isdir(self.appContext.getConfiguration().getDumpDir()):
             os.system("rm -r " + self.appContext.getConfiguration().getDumpDir())
@@ -353,6 +373,8 @@ class FilePushWriteContext(WriteContext):
                    os.sep + os.path.basename(self.getOutFileName()) + ".gz"
         os.system(tCommand)
 
+        self.appContext.getResultCollector().setCollectedArchiveFiles(os.path.basename(self.getOutFileName()) + '.gz',self.appContext.getConfiguration().getArchiveDir() )
+
         #os.chdir(self.appContext.getConfiguration().getClusteringDir())
 
         #os.system("rm -r " + self.appContext.getConfiguration().getCollectedDir())
@@ -399,6 +421,7 @@ class FileWebdavWriteContext(WriteContext):
         os.chdir(self.appContext.getConfiguration().getResultDir())
         tCommand = "ln -s " + fileInArchiveZipped  + " " +self.outFileName + ".gz"
         os.system(tCommand)
+        self.appContext.getResultCollector().setCollectedArchiveFiles(self.outFileName + ".gz",self.appContext.getConfiguration().getArchiveDir() )
 
 
 

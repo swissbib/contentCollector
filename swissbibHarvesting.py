@@ -187,13 +187,18 @@ else:
                         "records to cbs (without skip mechanism - configuration!): " + str(appContext.getResultCollector().getRecordsToCBSNoSkip()),
                         "\n"]
 
+            if not appContext.getConfiguration() is None:
+                procMess = SwissbibUtilities.addBlockedMessageToLogSummary(procMess,appContext.getConfiguration())
 
 
             writeContext.writeLog(header="oai harvesting summary",message=procMess )
 
         else:
-            writeContext.writeErrorLog(message= "ResultCollector was None - Why?")
-            writeContext.writeLog(message= "ResultCollector was None - Why?")
+            procMess = ["ResultCollector was None - Why?"]
+            if not appContext.getConfiguration() is None:
+                procMess = SwissbibUtilities.addBlockedMessageToLogSummary(procMess,appContext.getConfiguration())
+            writeContext.writeErrorLog(message= "\n".join(procMess))
+            writeContext.writeLog(message= "\n".join(procMess))
 
     #At the moment I don't want to use the advanced Harvesting Functionality like
     # - analyze Hash so records with no interest for the import process will be skipped

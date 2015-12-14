@@ -15,6 +15,8 @@ from Context import StoreNativeRecordContext, TaskContext
 
 import inspect
 import time
+import smtplib
+
 
 
 
@@ -44,7 +46,43 @@ class FileProcessor(SwissbibPreImportProcessor):
         pass
 
     def postProcessContent(self):
-        pass
+        numberProcessedRecords = self.context.getResultCollector().getIncrementProcessedRecordNoFurtherDetails()
+        maxDocuments = self.context.getConfiguration().getMaxDocuments()
+        blocked = self.context.getConfiguration().getBlocked()
+
+        #in case the configuration is set to blocked a
+        if (not maxDocuments is None and not numberProcessedRecords is None
+                and  int(numberProcessedRecords) > int(maxDocuments)) \
+                or blocked:
+            archivedFiles = self.context.getResultCollector().getCollectedArchiveFiles()
+            if not archivedFiles is None and len(archivedFiles) > 0:
+                for filename in archivedFiles.keys():
+                    os.system("unlink   " + self.context.getConfiguration().getResultDir() + os.sep + filename)
+                    os.system("mv  " + archivedFiles[filename] + os.sep + filename + " " + self.context.getConfiguration().getArchiveNotSent())
+
+                self.context.getConfiguration().setBlocked('true')
+
+                #send eMail
+                sender = 'swissbib-ub@unibas.ch'
+                receivers =  self.context.getConfiguration().getEMailNotifification().split(';')
+
+                message = """From: swissbib-ub@unibas.ch <swissbib-ub@unibas.ch>
+                To: various persons  <to@todomain.com>
+                Subject: collected content not sent to CBS
+
+                network: %s1
+                number of records: %s2
+                blocked status was: %s3
+                """
+
+                try:
+                   smtpObj = smtplib.SMTP('localhost')
+                   smtpObj.sendmail(sender, receivers, message)
+
+                except smtplib.SMTPException as smtpException:
+                   print "Error: unable to send email"
+                except Exception as exception:
+                    print "in basic exception"
 
 
 
@@ -128,6 +166,8 @@ class FileProcessor(SwissbibPreImportProcessor):
 
                     self.context.getResultCollector().addRecordsToCBSNoSkip(1)
                     self.context.getWriteContext().writeItem(contentSingleRecord)
+
+                self.context.getResultCollector().setIncrementProcessedRecordNoFurtherDetails()
 
                 for taskName,task  in  self.context.getConfiguration().getDedicatedTasks().items():
 
@@ -636,7 +676,7 @@ class FileWebDavProcessor(FileProcessor):
                 sfC = WebDavFileProvider(self.context, fname)
                 self.processFileContent(sfC)
 
-                self.context.getResultCollector().addProcessedFile(fname)
+                self.context.getResultCollector().addProcessedFile(compoundOutputFileName)
 
                 wC.closeWriteContext()
 
@@ -670,6 +710,47 @@ class FileWebDavProcessor(FileProcessor):
         os.chdir(self.context.getConfiguration().getReroSrcDir() )
         for fname in glob.glob('*.xml'):
             os.system("gzip " + fname )
+
+
+        #check the complete number of processed records
+        numberProcessedRecords = self.context.getResultCollector().getIncrementProcessedRecordNoFurtherDetails()
+        maxDocuments = self.context.getConfiguration().getMaxDocuments()
+        blocked = self.context.getConfiguration().getBlocked()
+
+        #in case the configuration is set to blocked a
+        if (not maxDocuments is None and not numberProcessedRecords is None
+                and  int(numberProcessedRecords) > int(maxDocuments)) \
+                or blocked:
+            archivedFiles = self.context.getResultCollector().getCollectedArchiveFiles()
+            if not archivedFiles is None and len(archivedFiles) > 0:
+                for filename in archivedFiles.keys():
+                    os.system("unlink   " + self.context.getConfiguration().getResultDir() + os.sep + filename)
+                    os.system("mv  " + archivedFiles[filename] + os.sep + filename + " " + self.context.getConfiguration().getArchiveNotSent())
+
+                self.context.getConfiguration().setBlocked('true')
+
+                #send eMail
+                sender = 'swissbib-ub@unibas.ch'
+                receivers =  self.context.getConfiguration().getEMailNotifification().split(';')
+
+                message = """From: swissbib-ub@unibas.ch <swissbib-ub@unibas.ch>
+                To: various persons  <to@todomain.com>
+                Subject: collected content not sent to CBS
+
+                network: %s1
+                number of records: %s2
+                blocked status was: %s3
+                """
+
+                try:
+                   smtpObj = smtplib.SMTP('localhost')
+                   smtpObj.sendmail(sender, receivers, message)
+
+                except smtplib.SMTPException as smtpException:
+                   print "Error: unable to send email"
+                except Exception as exception:
+                    print "in basic exception"
+
 
 
 
@@ -926,13 +1007,19 @@ if __name__ == '__main__':
     except Exception as exception:
 
         if not appContext is None and  not appContext.getWriteContext() is None:
+            procMess=["Exception in FileProcessorImpl.py"]
+
+            if not appContext.getConfiguration() is None:
+                procMess = SwissbibUtilities.addBlockedMessageToLogSummary(procMess,appContext.getConfiguration())
+
             appContext.getWriteContext().handleOperationAfterError(exType=exception,
-                                                        message="Exception in FileProcessorImpl.py" )
+                                                        message="\n".join(procMess) )
         elif not appContext is None and  not appContext.getConfiguration() is None:
 
             logfile = open(appContext.getConfiguration().getErrorLogDir() + os.sep + appContext.getConfiguration().getErrorLogFile(),"a")
             message = ["no WriteContext after Error: Exception Handler",
                        str(exception)]
+            message = SwissbibUtilities.addBlockedMessageToLogSummary(message,appContext.getConfiguration())
             logfile.write("\n".join(message))
             logfile.flush()
             logfile.close()
@@ -962,7 +1049,8 @@ if __name__ == '__main__':
                         "records to cbs updated: " + str(rCollector.getRecordsToCBSUpdated()) ,
                         "records to cbs (without skip mechanism - configuration!): " + str(rCollector.getRecordsToCBSNoSkip()),
                         "\n"]
-
+            if not appContext.getConfiguration() is None:
+                procMess = SwissbibUtilities.addBlockedMessageToLogSummary(procMess,appContext.getConfiguration())
 
 
             appContext.getWriteContext().writeLog(header="Import file (push or webdav) summary",message=procMess )
@@ -982,6 +1070,8 @@ if __name__ == '__main__':
             "records to cbs updated: " + str(rCollector.getRecordsToCBSUpdated()) ,
             "records to cbs (without skip mechanism - configuration!): " + str(rCollector.getRecordsToCBSNoSkip()),
             "\n"]
+            if not appContext.getConfiguration() is None:
+                procMess = SwissbibUtilities.addBlockedMessageToLogSummary(procMess,appContext.getConfiguration())
 
             logfile = open(appContext.getConfiguration().getProcessLogDir() + os.sep + appContext.getConfiguration().getProcessLogFile(),"a")
             logfile.write("\n".join(procMess))

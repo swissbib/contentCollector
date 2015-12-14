@@ -19,6 +19,7 @@ class HarvestingConfigs():
         self.applicationDir = os.getcwd()
 
 
+
         self.validTags = ['baseDir','source',
                           'actionFinished','completeListSize',
                           'cursor','dumpDir',
@@ -43,7 +44,9 @@ class HarvestingConfigs():
                           'resumptionTokenLogDir','resumptionTokenLogFile',
                           'writeResumptionToken','encodeUnicodeAsUTF8',
                           'iteratorOAIStructure','transformExLibrisNStructureForCBS',
-                          'oaiDeleteDir']
+                          'oaiDeleteDir', 'maxDocuments',
+                          'archiveNotSent','blocked',
+                          'eMailNotifification']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -90,6 +93,45 @@ class HarvestingConfigs():
                 print (aErr)
 
     #Erweiterungen: s. config.abn.xml
+
+
+    def getEMailNotifification(self):
+        return self.tagsDict['eMailNotifification']
+
+    def setEMailNotifification(self,value):
+        self._setLXMLTreeNodeValue("eMailNotifification", value)
+        self.tagsDict['eMailNotifification'] = value
+
+
+    def getBlocked(self):
+        if not self.tagsDict['blocked'] is None:
+            return  not (self.tagsDict['blocked']).strip().lower() in ['false','f','n','0','']
+        else:
+            return False
+
+
+    def setBlocked(self,value):
+        self._setLXMLTreeNodeValue("blocked", value)
+        self.tagsDict['blocked'] = value
+
+
+
+    def getArchiveNotSent(self):
+        return self.tagsDict['archiveNotSent']
+
+    def setArchiveNotSent(self,value):
+        self._setLXMLTreeNodeValue("archiveNotSent", value)
+        self.tagsDict['archiveNotSent'] = value
+
+
+    def getMaxDocuments(self):
+        return self.tagsDict['maxDocuments']
+
+    def setMaxDocuments(self,value):
+        self._setLXMLTreeNodeValue("maxDocuments", value)
+        self.tagsDict['maxDocuments'] = value
+
+
 
     def getDedicatedTasks(self):
         return self.tasksDict
@@ -633,6 +675,7 @@ class HarvestingConfigs():
         searchedNode = self.tree.find(".//" + nodeName)
         if not searchedNode is None:
             searchedNode.text = value
+
 
 
 
