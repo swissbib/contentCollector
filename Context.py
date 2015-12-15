@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 import types
 import re
+from swissbibUtilities import SwissbibUtilities
 
 
 
@@ -136,6 +137,12 @@ class WriteContext:
                 self.appContext.getConfiguration().setBlocked('true')
 
             os.chdir(self.appContext.getConfiguration().getResultDir())
+            SwissbibUtilities.sendNotificationMail(receivers=self.appContext.getConfiguration().getEMailNotifification(),
+                                                   network=self.appContext.getConfiguration().getNetworkPrefix(),
+                                                   numberDocuments=numberProcessedRecords,
+                                                   mailserver=self.appContext.getConfiguration().getMailServer())
+
+
 
         else:
             os.chdir(self.appContext.getConfiguration().getDumpDir())

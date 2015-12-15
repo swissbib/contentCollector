@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import xml
 from swissbibHash import HashMarcContent, HashSwissBibMarcContent, HashDcContent, HashReroMarcContent, HashNebisMarcContent
 #import swissbibHash
+import smtplib
 
 
 
@@ -39,6 +40,41 @@ class SwissbibUtilities():
                 procMess.append("because process is blocked, collected content wasn't sent to CBS - there should be no symbolic link in the results directory")
             return procMess
 
+
+    @staticmethod
+    def sendNotificationMail(receivers="swissbib-ub@unibas.ch",
+                                network="?",
+                                numberDocuments="?",
+                                mailserver="smtp.unibas.ch",
+                                sender="swissbib-ub@unibas.ch"):
+
+            receivers = receivers.split(';')
+            to = ""
+            for recipient in receivers:
+                to += "\"" + recipient + "\" <" + recipient + ">;"
+            to =  to[:-1]
+
+
+            message =   ["From: \"{0}\" <{0}>",
+                        "To: {1}",
+                        "Subject: collected content not sent to CBS for {2}","",
+                        "network: {2}",
+                        "number of records: {3}",
+                        "status of the repository is now blocked which means you have to activate the symbolic link on the host by yourself.",
+                        "Additionally  you have to change the configuration from <blocked>TRUE</blocked> to <blocked/> in the configuration file for this source. (Otherwise the next collected documents are again not sent to CBS)"]
+
+
+            #message = "\n".join(message).format(sender,";".join(receivers),network,str(numberDocuments))
+            message = "\n".join(message).format(sender,to,network,str(numberDocuments))
+
+            try:
+                smtpObj = smtplib.SMTP(mailserver)
+                smtpObj.sendmail(sender, receivers, message)
+
+            except smtplib.SMTPException as smtpException:
+               print smtpException.message
+            except Exception as exception:
+                print exception.message
 
 
     def getStructureHeaderPattern(self):

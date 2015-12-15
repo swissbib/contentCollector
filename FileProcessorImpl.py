@@ -62,27 +62,10 @@ class FileProcessor(SwissbibPreImportProcessor):
 
                 self.context.getConfiguration().setBlocked('true')
 
-                #send eMail
-                sender = 'swissbib-ub@unibas.ch'
-                receivers =  self.context.getConfiguration().getEMailNotifification().split(';')
-
-                message = """From: swissbib-ub@unibas.ch <swissbib-ub@unibas.ch>
-                To: various persons  <to@todomain.com>
-                Subject: collected content not sent to CBS
-
-                network: %s1
-                number of records: %s2
-                blocked status was: %s3
-                """
-
-                try:
-                   smtpObj = smtplib.SMTP('localhost')
-                   smtpObj.sendmail(sender, receivers, message)
-
-                except smtplib.SMTPException as smtpException:
-                   print "Error: unable to send email"
-                except Exception as exception:
-                    print "in basic exception"
+                SwissbibUtilities.sendNotificationMail(receivers=self.context.getConfiguration().getEMailNotifification(),
+                                                       network=self.context.getConfiguration().getNetworkPrefix(),
+                                                       numberDocuments=numberProcessedRecords,
+                                                       mailserver=self.context.getConfiguration().getMailServer())
 
 
 
@@ -729,27 +712,10 @@ class FileWebDavProcessor(FileProcessor):
 
                 self.context.getConfiguration().setBlocked('true')
 
-                #send eMail
-                sender = 'swissbib-ub@unibas.ch'
-                receivers =  self.context.getConfiguration().getEMailNotifification().split(';')
-
-                message = """From: swissbib-ub@unibas.ch <swissbib-ub@unibas.ch>
-                To: various persons  <to@todomain.com>
-                Subject: collected content not sent to CBS
-
-                network: %s1
-                number of records: %s2
-                blocked status was: %s3
-                """
-
-                try:
-                   smtpObj = smtplib.SMTP('localhost')
-                   smtpObj.sendmail(sender, receivers, message)
-
-                except smtplib.SMTPException as smtpException:
-                   print "Error: unable to send email"
-                except Exception as exception:
-                    print "in basic exception"
+                SwissbibUtilities.sendNotificationMail(receivers=self.context.getConfiguration().getEMailNotifification(),
+                                                       network=self.context.getConfiguration().getNetworkPrefix(),
+                                                       numberDocuments=numberProcessedRecords,
+                                                       mailserver=self.context.getConfiguration().getMailServer())
 
 
 

@@ -46,7 +46,7 @@ class HarvestingConfigs():
                           'iteratorOAIStructure','transformExLibrisNStructureForCBS',
                           'oaiDeleteDir', 'maxDocuments',
                           'archiveNotSent','blocked',
-                          'eMailNotifification']
+                          'eMailNotifification','mailServer']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -94,6 +94,14 @@ class HarvestingConfigs():
 
     #Erweiterungen: s. config.abn.xml
 
+
+
+    def getMailServer(self):
+        return self.tagsDict['mailServer']
+
+    def setMailServer(self,value):
+        self._setLXMLTreeNodeValue("mailServer", value)
+        self.tagsDict['mailServer'] = value
 
     def getEMailNotifification(self):
         return self.tagsDict['eMailNotifification']
