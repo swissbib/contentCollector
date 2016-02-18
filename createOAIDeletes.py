@@ -16,12 +16,15 @@ from os import listdir
 from os.path import isfile, join
 from harvestingTasks import PersistRecordMongo
 from Context import StoreNativeRecordContext
+import re
+#from createOAIDeletes import CreateSNLDeleteMessages
+#import CreateSNLDeleteMessages
 
 
 
 
 __author__ = 'swissbib - UB Basel, Switzerland, Guenter Hipler'
-__copyright__ = "Copyright 2015, swissbib project"
+__copyright__ = "Copyright 2016, swissbib project"
 __credits__ = "https://github.com/swissbib/contentCollector/issues/5"
 __license__ = "http://opensource.org/licenses/gpl-2.0.php GNU General Public License"
 __version__ = "0.1"
@@ -30,10 +33,11 @@ __email__ = "guenter.hipler@unibas.ch"
 __status__ = "in development"
 __description__ = """
                     https://github.com/swissbib/contentCollector/issues/5
+                    plus general enhancement to create delete messages e.g. for summon ebooks
                     """
 
 
-class CreateOAIDeletes:
+class CreateDeletes:
 
 
     def __init__(
@@ -46,52 +50,47 @@ class CreateOAIDeletes:
     def setFileName(self,fileName):
         self.fileName = fileName
 
+    def createGeneratorForDeleteIds(self):
+        #default Generator returns nothing
+        emptyList = range(0)
+        for i in emptyList:
+            yield i
+
+
     def getFileName(self):
         return self.fileName
 
-    def processOAIDeletes(self):
-        deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
-        #oai:helveticat.ch:244   ->> SNL
-        #<record><header status="deleted"><identifier>aleph-publish:004127018</identifier></header></record>
-        #oai:aleph.unibas.ch:DSV01-005588958
+
+    def createXMLDeleteStructure(self, recordID):
+        return "<record><header status=\"deleted\"><identifier>" + recordID + \
+                                 "</identifier></header></record>"
+
+    def processDeletes(self):
 
 
-        for oaiDeletes in [ f for f in listdir(deleteDir) if isfile(join(deleteDir,f)) ]:
+        for idToDelete in self.createGeneratorForDeleteIds():
 
-            self.applicationContext.getConfiguration().getPrefixSummaryFile()
 
-            if (oaiDeletes.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
+            self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
+            recordStructure = self.createXMLDeleteStructure(idToDelete)
 
-                deletesAbsolutePath = join(deleteDir,oaiDeletes)
-                fileHandle = open(deletesAbsolutePath, 'r')
-                for line in fileHandle:
+            self.applicationContext.getWriteContext().writeItem(recordStructure)
 
-                    #we don't want to process empty lines
-                    line = line.strip('\n\r')
-                    if len(line) > 0:
-                        self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
-                        recordId = self.getRecordId(line.strip('\n\r'))
-                        oaiDeleteStructure = "<record><header status=\"deleted\"><identifier>" + line + \
-                                             "</identifier></header></record>"
+            for taskName,task  in  self.applicationContext.getConfiguration().getDedicatedTasks().items():
 
-                        self.applicationContext.getWriteContext().writeItem(oaiDeleteStructure)
+                try:
 
-                        for taskName,task  in  self.applicationContext.getConfiguration().getDedicatedTasks().items():
+                    if isinstance(task,PersistRecordMongo):
+                        taskContext = StoreNativeRecordContext(appContext=self.applicationContext,
+                                                                rID=idToDelete,singleRecord=recordStructure,
+                                                                deleted=True)
+                        task.processRecord(taskContext)
+                except Exception as pythonBaseException:
 
-                            try:
+                    self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],message=[str(pythonBaseException), idToDelete])
+                    continue
 
-                                if isinstance(task,PersistRecordMongo):
-                                    taskContext = StoreNativeRecordContext(appContext=self.applicationContext,
-                                                                            rID=recordId,singleRecord=oaiDeleteStructure,
-                                                                            deleted=True)
-                                    task.processRecord(taskContext)
-                            except Exception as pythonBaseException:
-
-                                self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],message=[str(pythonBaseException), line])
-                                continue
-
-                fileHandle.close()
-                self._moveFileWithDeletedIds(deletesAbsolutePath, oaiDeletes)
+        #self._moveFileWithDeletedIds(deletesAbsolutePath, oaiDeletes)
 
 
     def hasOAIDeletes(self):
@@ -108,11 +107,58 @@ class CreateOAIDeletes:
         return "(" + self.applicationContext.getConfiguration().getNetworkPrefix() + ")" + idWithoutNetwork
 
 
-    def _moveFileWithDeletedIds(self,fileNameAbsolute, fileName):
-        movedFile = self.applicationContext.getConfiguration().getArchiveDir() + os.sep + fileName +  "_deletesNoOai"
-        os.system("mv " + fileNameAbsolute + " " + movedFile)
-        tCommand = "gzip -9 " + movedFile
+    def _moveFileWithDeletedIds(self,pathSourceFileAbsolute, sourceFileName):
+        archiveDirSourceDeleteMessages = self.applicationContext.getConfiguration().getArchiveDir() + os.sep + "processedDeleteMessages"
+        if not os.path.isdir(archiveDirSourceDeleteMessages):
+            os.system("mkdir -p " + archiveDirSourceDeleteMessages)
+
+        targetFile = "".join(['{:%Y%m%d%H%M%S}'.format(datetime.now()),".",sourceFileName])
+        deletesFileAbsolutePath = pathSourceFileAbsolute + os.sep + sourceFileName
+        os.system("mv " + deletesFileAbsolutePath + " " + archiveDirSourceDeleteMessages + os.sep + targetFile)
+
+        tCommand = "gzip -9 " + archiveDirSourceDeleteMessages + os.sep + targetFile
         os.system(tCommand)
+
+
+class CreateSNLDeleteMessages(CreateDeletes):
+    pass
+
+class CreateSummonDeleteMessages(CreateDeletes):
+
+    def __init__(self,
+                 applicationContext=None,  writeContext = None):
+        CreateDeletes.__init__(self,applicationContext=applicationContext, writeContext=writeContext)
+
+        self.pSummonDeletedRecordId = re.compile('^(.*?),',re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+    def createGeneratorForDeleteIds(self):
+
+        deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
+
+        for deleteMessageFile in [ f for f in listdir(deleteDir) if isfile(join(deleteDir,f)) ]:
+
+            if (deleteMessageFile.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
+                deletesAbsolutePath = join(deleteDir,deleteMessageFile)
+                fileHandle = open(deletesAbsolutePath, 'r')
+                linenumber = 0
+                for line in fileHandle:
+                    if linenumber == 0:
+                        # we don't want the first line of the csv header file
+                        linenumber += 1
+                        continue
+                    searchedNumberPattern =  self.pSummonDeletedRecordId.search(line)
+                    if searchedNumberPattern:
+                        recordNumber =  searchedNumberPattern.group(1)
+                        #print recordNumber
+                        yield recordNumber
+
+                fileHandle.close()
+                self._moveFileWithDeletedIds(deleteDir, deleteMessageFile)
+
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -172,15 +218,18 @@ if __name__ == '__main__':
 
         writeContext = HarvestingWriteContext(appContext)
         appContext.setWriteContext(writeContext)
-        deleteGenerator = CreateOAIDeletes(
-                                   applicationContext=appContext,
-                                   writeContext=writeContext)
+
+        deleteGenerator = globals()[sConfigs.getDeleteMessagesProcessorType()](appContext,writeContext)
+
+
 
         if deleteGenerator.hasOAIDeletes():
 
-            deleteGenerator.processOAIDeletes()
+            deleteGenerator.processDeletes()
             writeContext.closeWriteContext()
             writeContext.moveContentFile()
+
+
 
 
 
