@@ -163,6 +163,13 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
         record = taskContext.getRecord()
         isDeleted = taskContext.isDeleted()
 
+        recordTimestamp = taskContext.getRecordTimestamp()
+
+        if not recordTimestamp is None:
+            try:
+                recordTimestamp = datetime.strptime(recordTimestamp, "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                recordTimestamp = None
 
         try:
             tCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
@@ -209,7 +216,8 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                              "record":binary,
                              "gndfields":selectedGNDFields,
                              "macsfields" : selectedMACSFields,
-                             "status":status
+                             "status":status,
+                             "recordTimestamp": recordTimestamp
                 }
 
                 tCollection.insert(newRecord)
@@ -228,6 +236,7 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                 mongoRecord["datum"] = str(datetime.now())[:10]
                 mongoRecord["gndfields"] = selectedGNDFields
                 mongoRecord["macsfields"] = selectedMACSFields
+                mongoRecord["recordTimestamp"] = recordTimestamp
 
                 tCollection.save(mongoRecord,safe=True)
 
@@ -297,6 +306,14 @@ class PersistDSV11RecordMongo(PersistRecordMongo):
         isDeleted = taskContext.isDeleted()
 
 
+        recordTimestamp = taskContext.getRecordTimestamp()
+
+        if not recordTimestamp is None:
+            try:
+                recordTimestamp = datetime.strptime(recordTimestamp, "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                recordTimestamp = None
+
         try:
             tCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
 
@@ -351,7 +368,8 @@ class PersistDSV11RecordMongo(PersistRecordMongo):
                              "org152" : self.originalTagCodes['152'],
                              "record":binary,
                              "additionalvalues":selectedAdditionalValues,
-                             "status":status
+                             "status":status,
+                             "recordTimestamp": recordTimestamp
                 }
 
                 tCollection.insert(newRecord)
@@ -378,6 +396,7 @@ class PersistDSV11RecordMongo(PersistRecordMongo):
                 mongoRecord["status"] = status
                 mongoRecord["datum"] = str(datetime.now())[:10]
                 mongoRecord["additionalvalues"] = selectedAdditionalValues
+                mongoRecord["recordTimestamp"] = recordTimestamp
 
                 tCollection.save(mongoRecord,safe=True)
 
