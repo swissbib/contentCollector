@@ -462,12 +462,10 @@ class StoreNativeRecordContext(TaskContext):
     def __init__(self,appContext=None,rID=None,singleRecord="",deleted=False):
 
         TaskContext.__init__(self,appContext=appContext)
-
+        self.dateTimeStamp = re.compile('<header>.*?<datestamp>(.*?)</datestamp>.*?</header>',re.UNICODE | re.DOTALL | re.IGNORECASE)
         self.rID = rID
         self.singleRecord = singleRecord
         self.deleted = deleted
-
-
 
 
     def getID(self):
@@ -479,7 +477,14 @@ class StoreNativeRecordContext(TaskContext):
 
         self.rID = rID
 
+    def getRecordTimestamp(self):
+        recordTimestamp = None
+        if not self.singleRecord is None:
+            existTimestamp = self.dateTimeStamp.search(self.singleRecord)
+            if existTimestamp:
+                recordTimestamp = existTimestamp.group(1)
 
+        return recordTimestamp
 
 
     def getRecord(self):

@@ -53,7 +53,7 @@ import re
 oParser = None
 args = None
 sConfigs = None
-mongoWrapper = None
+readWrapper = None
 
 
 try:
@@ -67,9 +67,7 @@ try:
     oParser.add_argument("-k", "--condition", dest="condition", default=None)
     oParser.add_argument("-f", "--inputFile", dest="inputFile", default=None)
     oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
-
-
-
+    oParser.add_argument("-r", "--readTimestamps", dest="queriedTimeStamps", default=None)
 
 
     args = oParser.parse_args()
@@ -83,18 +81,48 @@ try:
 
     readWrapper = MongoDBHarvestingWrapperAdmin(appContext)
 
+    if not args.queriedTimeStamps is None:
 
-    readWrapper.readRecords(rId=args.idToRead,countToRead=args.countToRead,
-                                fileSize=args.fileSize, outDir=args.outDir,condition=args.condition,
-                                inputFile=args.inputFile,
-                                userDatestamp=args.userDatestamp
+        outDir =  args.outDir if not args.outDir is None else "/var/swissbib/mongo/exportlocaldbs"
+        #we expect something like this
+        #--readTimeStamps=2016-02-01T22:03:17Z###2016-02-02T22:03:17Z
+        searchedTimestamps = args.queriedTimeStamps
+        countToRead = 100000 if args.countToRead == None else args.countToRead
+        if searchedTimestamps.find('###') != -1:
+            dateParts = searchedTimestamps.split("###")
+            #start and end is available
+            readWrapper.readRecordsWithTimeStamp(startDate=dateParts[0],endDate=dateParts[1],
+                                                 outDir=outDir, fileSize=args.fileSize,
+                                                 countToRead=countToRead)
+        elif searchedTimestamps.find('#') != -1:
+            #only one timestamp - should be either start or end
+            dateParts = searchedTimestamps.split("#")
+            #we expect two parts index[0] should be either start or end
+            if dateParts[0].lower() == "start":
+                readWrapper.readRecordsWithTimeStamp(startDate=dateParts[1], endDate=None,
+                                                     outDir=outDir, fileSize=args.fileSize,
+                                                     countToRead=countToRead)
+            elif dateParts[0].lower() == "end":
+                readWrapper.readRecordsWithTimeStamp(startDate=None, endDate=dateParts[1],
+                                                     outDir=outDir, fileSize=args.fileSize,
+                                                     countToRead=countToRead)
+        else:
+            print "no date parameters are matching as start and/or end date - nothing is done"
 
-                            )
+
+
+    else:
+        readWrapper.readRecords(rId=args.idToRead,countToRead=args.countToRead,
+                                    fileSize=args.fileSize, outDir=args.outDir,condition=args.condition,
+                                    inputFile=args.inputFile,
+                                    userDatestamp=args.userDatestamp
+                                )
 
 
 except Exception as pythonBaseException:
     print str(pythonBaseException)
 
 finally:
-    pass
+    if not readWrapper is None:
+        readWrapper.closeResources()
     #print "process readOAIRecords has finished - look for possible errors"

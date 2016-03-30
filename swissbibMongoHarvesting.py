@@ -261,6 +261,101 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
 
 
+    def readRecordsWithTimeStamp(self, startDate=None, endDate=None, outDir=None, fileSize=None, countToRead = None):
+
+        sourceCollection = self.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+        regExpdateTimeStamp = re.compile('<header>.*?<datestamp>(.*?)</datestamp>.*?</header>',re.UNICODE | re.DOTALL |
+                                         re.IGNORECASE)
+
+
+        if not startDate is None and not endDate is None:
+            tStartDate = datetime.strptime(startDate, "%Y-%m-%dT%H:%M:%SZ")
+            tEndDate = datetime.strptime(endDate, "%Y-%m-%dT%H:%M:%SZ")
+
+            clause = {
+                '$and': [{'recordTimestamp': {'$exists': True}},
+                         {'recordTimestamp': {'$ne': None}},
+                         {'recordTimestamp': {'$gte': tStartDate}},
+                         {'recordTimestamp': {'$lte': tEndDate}}]
+            }
+
+        elif not startDate is None:
+            tStartDate = datetime.strptime(startDate, "%Y-%m-%dT%H:%M:%SZ")
+            clause = {
+                '$and': [{'recordTimestamp': {'$exists': True}},
+                         {'recordTimestamp': {'$ne': None}},
+                         {'recordTimestamp': {'$gte': tStartDate}}]
+            }
+        elif not endDate is None:
+            tEndDate = datetime.strptime(endDate, "%Y-%m-%dT%H:%M:%SZ")
+            clause = {
+                '$and': [{'recordTimestamp': {'$exists': True}},
+                         {'recordTimestamp': {'$ne': None}},
+                         {'recordTimestamp': {'$lte': tEndDate}}]
+            }
+        else:
+            clause = None
+
+        lastTimeStamp = "not defined so far"
+        if not clause is None:
+            outDir = self.checkAndCreateOutDir(outDir)
+            outfile = self.defineOutPutFile(outDir)
+            fileToWrite = open(outfile, "w")
+            self.writeHeader(fileToWrite)
+
+            #at the moment ascending sort order is the only possibility
+
+            print "".join(["number of total records in the current pipe: ", str(sourceCollection.find(clause).count()),"\n"])
+            if not countToRead is None:
+                print "number of max. records being processed: " + str(countToRead)
+
+            result = sourceCollection.find(clause).sort([('recordTimestamp', +1)])
+            numberOfRecordsAlreadyRead = 0
+            for document in result:
+                numberOfRecordsAlreadyRead += 1
+                #lese den letzten timestamp
+
+                if not countToRead is None and numberOfRecordsAlreadyRead > int(countToRead)  :
+                    break
+                r = zlib.decompress(document["record"])
+
+                currentRecordTimestamp = regExpdateTimeStamp.search(r)
+                if not currentRecordTimestamp:
+                    #severe error, must not happen because of pre conditions
+                    self.writeFooter(fileToWrite)
+                    fileToWrite.close()
+                    raise Exception("".join([ "record: ", r, " doesn't contain a timestamp which shouldn't be possible"] ))
+                else:
+                    lastTimeStamp = currentRecordTimestamp.group(1)
+
+                fileToWrite.write(r + "\n\n")
+
+                fileToWrite.flush()
+
+                if (not fileSize is None):
+
+                    statinfo = os.stat(outfile)
+                    size = statinfo.st_size
+
+                    forCompare = int(fileSize) * 1000000
+
+                    if size > forCompare :
+                        self.writeFooter(fileToWrite)
+                        fileToWrite.close()
+                        outfile = self.defineOutPutFile(outDir)
+                        fileToWrite = open(outfile, "w")
+                        self.writeHeader(fileToWrite)
+
+            if not fileToWrite is None:
+                self.writeFooter(fileToWrite)
+                fileToWrite.close()
+
+
+        fileLastTimestamp =  open(os.getcwd() + os.sep + "lastTimestamp.txt","w")
+        fileLastTimestamp.write(lastTimeStamp)
+        fileLastTimestamp.flush()
+        fileLastTimestamp.close()
+
 
     def readRecords(self,rId=None,countToRead=None,fileSize=None,outDir=None,condition=None,
                     inputFile=None,userDatestamp=None):
