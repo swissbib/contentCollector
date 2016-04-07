@@ -46,7 +46,8 @@ class HarvestingConfigs():
                           'iteratorOAIStructure','transformExLibrisNStructureForCBS',
                           'oaiDeleteDir', 'maxDocuments',
                           'archiveNotSent','blocked',
-                          'eMailNotifification','mailServer']
+                          'eMailNotifification','mailServer',
+                          'addRecordTimeStamp']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -187,8 +188,18 @@ class HarvestingConfigs():
         self._setLXMLTreeNodeValue("encodeUnicodeAsUTF8", value)
         self.tagsDict['encodeUnicodeAsUTF8'] = value
 
+    def setAddRecordTimeStamp(self,value):
+        self._setLXMLTreeNodeValue("addRecordTimeStamp", value)
+        self.tagsDict['addRecordTimeStamp'] = value
 
-    #encodeUnicodeAsUTF8
+
+    def getAddRecordTimeStamp(self):
+        if not self.tagsDict['addRecordTimeStamp'] is None:
+
+            return not (self.tagsDict['addRecordTimeStamp']).strip().lower() in ['false', 'f', 'n', '0', '']
+        else:
+            return False
+
 
     def isWriteResumptionToken(self):
         if not self.tagsDict['writeResumptionToken'] is None:

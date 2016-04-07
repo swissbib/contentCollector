@@ -479,7 +479,7 @@ class StoreNativeRecordContext(TaskContext):
 
     def getRecordTimestamp(self):
         recordTimestamp = None
-        if not self.singleRecord is None:
+        if not self.singleRecord is None and self.appContext.getConfiguration().getAddRecordTimeStamp():
             existTimestamp = self.dateTimeStamp.search(self.singleRecord)
             if existTimestamp:
                 recordTimestamp = existTimestamp.group(1)

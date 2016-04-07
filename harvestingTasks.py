@@ -99,13 +99,19 @@ class PersistRecordMongo(HarvestingTask):
                     status = "new"
                     taskContext.getResultCollector().addRecordsToCBSInserted(1)
 
-
-                newRecord = {"_id":rid,
-                             "datum":str(datetime.now())[:10],
-                             "record":binary,
-                             "status":status,
-                             "recordTimestamp":recordTimestamp
-                }
+                if not recordTimestamp is None:
+                    newRecord = {"_id":rid,
+                                 "datum":str(datetime.now())[:10],
+                                 "record":binary,
+                                 "status":status,
+                                 "recordTimestamp":recordTimestamp
+                    }
+                else:
+                    newRecord = {"_id": rid,
+                                 "datum": str(datetime.now())[:10],
+                                 "record": binary,
+                                 "status": status,
+                                 }
 
                 tCollection.insert(newRecord)
 
@@ -117,11 +123,15 @@ class PersistRecordMongo(HarvestingTask):
                     status = "updated"
                     taskContext.getResultCollector().addRecordsToCBSUpdated(1)
 
-
-                mongoRecord["record"] = binary
-                mongoRecord["status"] = status
-                mongoRecord["datum"] = str(datetime.now())[:10]
-                mongoRecord["recordTimestamp"] = recordTimestamp
+                if not recordTimestamp is None:
+                    mongoRecord["record"] = binary
+                    mongoRecord["status"] = status
+                    mongoRecord["datum"] = str(datetime.now())[:10]
+                    mongoRecord["recordTimestamp"] = recordTimestamp
+                else:
+                    mongoRecord["record"] = binary
+                    mongoRecord["status"] = status
+                    mongoRecord["datum"] = str(datetime.now())[:10]
 
                 tCollection.save(mongoRecord,safe=True)
 
