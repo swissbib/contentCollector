@@ -47,7 +47,8 @@ class HarvestingConfigs():
                           'oaiDeleteDir', 'maxDocuments',
                           'archiveNotSent','blocked',
                           'eMailNotifification','mailServer',
-                          'addRecordTimeStamp']
+                          'addRecordTimeStamp',
+                          'deleteMessagesProcessorType']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -111,6 +112,12 @@ class HarvestingConfigs():
         self._setLXMLTreeNodeValue("eMailNotifification", value)
         self.tagsDict['eMailNotifification'] = value
 
+    def getDeleteMessagesProcessorType(self):
+        return self.tagsDict['deleteMessagesProcessorType']
+
+    def setDeleteMessagesProcessorType(self, value):
+        self._setLXMLTreeNodeValue("deleteMessagesProcessorType", value)
+        self.tagsDict['deleteMessagesProcessorType'] = value
 
     def getBlocked(self):
         if not self.tagsDict['blocked'] is None:
