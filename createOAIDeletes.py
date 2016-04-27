@@ -13,14 +13,10 @@ from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 
 from Context import ApplicationContext, HarvestingWriteContext
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, isdir
 from harvestingTasks import PersistRecordMongo
 from Context import StoreNativeRecordContext
 import re
-#from createOAIDeletes import CreateSNLDeleteMessages
-#import CreateSNLDeleteMessages
-
-
 
 
 __author__ = 'swissbib - UB Basel, Switzerland, Guenter Hipler'
@@ -51,10 +47,36 @@ class CreateDeletes:
         self.fileName = fileName
 
     def createGeneratorForDeleteIds(self):
-        #default Generator returns nothing
-        emptyList = range(0)
-        for i in emptyList:
-            yield i
+
+        deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
+
+        generatorActivated = False
+        for deleteMessageFile in [f for f in listdir(deleteDir) if isfile(join(deleteDir, f))]:
+
+            if (deleteMessageFile.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
+
+                deletesAbsolutePath = join(deleteDir, deleteMessageFile)
+                fileHandle = open(deletesAbsolutePath, 'r')
+                linenumber = 0
+                for line in fileHandle:
+                    if not self.filterForCurrentLine(linenumber,line):
+                        # we don't want the first line of the csv header file
+                        linenumber += 1
+                        continue
+                    linenumber += 1
+                    recordNumber = self.getIdFromStructure(line)
+                    if not recordNumber is None:
+                        generatorActivated = True
+                        yield recordNumber
+
+                fileHandle.close()
+                self._moveFileWithDeletedIds(deleteDir, deleteMessageFile)
+        if not generatorActivated:
+            #in case we haven't yielded any records a default empty list is created to satisfy the client expecting
+            #a result of a list iteration
+            emptyList = range(0)
+            for i in emptyList:
+                yield i
 
 
     def getFileName(self):
@@ -62,8 +84,16 @@ class CreateDeletes:
 
 
     def createXMLDeleteStructure(self, recordID):
+        # 2016-04-18T07:18:44Z (as example)
+        #we need the datetimestamp for the crafted delete structure because for the majaority of the repositories
+        # (with the exception of Nebis and rero) we want to seperate this datetime-stamp in a single field of the
+        #Mongo Index. And because we configured this for the default case it causes troubles when datetime-stamps
+        #are not part of the crafted deleted structure
+        currentTime = '{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
         return "<record><header status=\"deleted\"><identifier>" + recordID + \
-                                 "</identifier></header></record>"
+                                 "</identifier>" + \
+               "<datestamp>" + currentTime + "</datestamp>" + \
+               "</header></record>"
 
     def processDeletes(self):
 
@@ -96,10 +126,11 @@ class CreateDeletes:
     def hasOAIDeletes(self):
         deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
         hasDeletes = False
-        for oaiDeletes in [ f for f in listdir(deleteDir) if isfile(join(deleteDir,f)) ]:
-            if (oaiDeletes.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
-                hasDeletes = True
-                break
+        if isdir(deleteDir):
+            for oaiDeletes in [ f for f in listdir(deleteDir) if isfile(join(deleteDir,f)) ]:
+                if (oaiDeletes.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
+                    hasDeletes = True
+                    break
         return hasDeletes
 
 
@@ -119,9 +150,56 @@ class CreateDeletes:
         tCommand = "gzip -9 " + archiveDirSourceDeleteMessages + os.sep + targetFile
         os.system(tCommand)
 
+    def getIdFromStructure(self, structure):
+        #default behaviour: structure is already the searched ID which should be deleted
+        #we don't have to search the ID as part of the structure
+        return structure
+
+    def filterForCurrentLine(self, linenumber, structure):
+        #default behaviour: use every single line
+        return True
+
 
 class CreateSNLDeleteMessages(CreateDeletes):
-    pass
+    def __init__(self,
+                 applicationContext=None, writeContext=None):
+        CreateDeletes.__init__(self, applicationContext=applicationContext, writeContext=writeContext)
+        #self.plineWithRecordId = re.compile('Record ID:', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #self.psearchedRecordId = re.compile('.*?([\d]+)', re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
+
+    #def filterForCurrentLine(self, linenumber, structure):
+        # SNL sends us a text file (via email) which contains the following structure for each record to be deleted
+        #matter of interest for us is only the line Record ID
+        # Record ID: 1797285
+        # Username: root
+        # Timestamp: 24-NOV-2015 09:13:53
+        # Bibliographic Level: m
+        # Record Type: a
+        # Record State: Deleted
+        #hasSearchedPattern = self.plineWithRecordId.search(structure)
+        #return hasSearchedPattern
+        #this was the former version of the delivered messages. Now it seems we get single lines which contain only
+        #the number we intended to extract
+        #so we jab just use the parent method
+    #    pass
+
+
+    def getIdFromStructure(self, structure):
+        # default behaviour: structure is already the searched ID which should be deleted
+        # we don't have to search the ID as part of the structure
+        #searchedNumberPattern = self.psearchedRecordId.search(structure)
+        #if searchedNumberPattern:
+        #    numberInline = searchedNumberPattern.group(1)
+        #    #noch aufbereiten
+        #    return numberInline
+        #    #return searchedNumberPattern.group(1)
+        #else:
+        #    return None
+
+        paddingAndAligned = 'vtls' + '{:0>9}'.format(structure.rstrip('\n\r '))
+        return paddingAndAligned
 
 class CreateSummonDeleteMessages(CreateDeletes):
 
@@ -131,34 +209,20 @@ class CreateSummonDeleteMessages(CreateDeletes):
 
         self.pSummonDeletedRecordId = re.compile('^(.*?),',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
-    def createGeneratorForDeleteIds(self):
+    def getIdFromStructure(self, structure):
+        # default behaviour: structure is already the searched ID which should be deleted
+        # we don't have to search the ID as part of the structure
+        searchedNumberPattern = self.pSummonDeletedRecordId.search(structure)
+        if searchedNumberPattern:
+            return searchedNumberPattern.group(1)
+        else:
+            return None
 
-        deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
-
-        for deleteMessageFile in [ f for f in listdir(deleteDir) if isfile(join(deleteDir,f)) ]:
-
-            if (deleteMessageFile.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
-                deletesAbsolutePath = join(deleteDir,deleteMessageFile)
-                fileHandle = open(deletesAbsolutePath, 'r')
-                linenumber = 0
-                for line in fileHandle:
-                    if linenumber == 0:
-                        # we don't want the first line of the csv header file
-                        linenumber += 1
-                        continue
-                    searchedNumberPattern =  self.pSummonDeletedRecordId.search(line)
-                    if searchedNumberPattern:
-                        recordNumber =  searchedNumberPattern.group(1)
-                        #print recordNumber
-                        yield recordNumber
-
-                fileHandle.close()
-                self._moveFileWithDeletedIds(deleteDir, deleteMessageFile)
-
-
-
-
-
+    def filterForCurrentLine(self, linenumber, structure):
+        #summon file with records to be deleted is a CSV structure with the first line as header
+        #possible alternative: look for patterns
+        #return False
+        return False if linenumber == 0 else True
 
 
 if __name__ == '__main__':
