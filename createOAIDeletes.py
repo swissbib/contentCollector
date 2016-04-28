@@ -160,6 +160,10 @@ class CreateDeletes:
         return True
 
 
+    def getCurrentTimeFormated(self):
+        return '{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
+
+
 class CreateSNLDeleteMessages(CreateDeletes):
     def __init__(self,
                  applicationContext=None, writeContext=None):
@@ -186,6 +190,48 @@ class CreateSNLDeleteMessages(CreateDeletes):
     #    pass
 
 
+
+    def processDeletes(self):
+
+        for idToDelete in self.createGeneratorForDeleteIds():
+
+            self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
+
+            splitted = idToDelete.split('###')
+            if not len(splitted) == 2:
+                #we expect two Id's
+                self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a record"],
+                                                                        message=["iterator didn't provide the expected two IDs",
+                                                                                 " ".join(splitted)])
+                continue
+
+
+            recordStructure = self.createXMLDeleteStructure(splitted[1])
+
+            self.applicationContext.getWriteContext().writeItem(recordStructure)
+
+
+            recordStructureMongo = self._createRecordStructureForMongo(splitted[0])
+
+            for taskName, task in self.applicationContext.getConfiguration().getDedicatedTasks().items():
+
+                try:
+
+                    if isinstance(task, PersistRecordMongo):
+                        taskContext = StoreNativeRecordContext(appContext=self.applicationContext,
+                                                               rID=splitted[0], singleRecord=recordStructureMongo,
+                                                               deleted=True)
+                        task.processRecord(taskContext)
+                except Exception as pythonBaseException:
+
+                    self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],
+                                                                            message=[str(pythonBaseException),
+                                                                                     idToDelete])
+                    continue
+
+                    # self._moveFileWithDeletedIds(deletesAbsolutePath, oaiDeletes)
+
+
     def getIdFromStructure(self, structure):
         # default behaviour: structure is already the searched ID which should be deleted
         # we don't have to search the ID as part of the structure
@@ -198,8 +244,32 @@ class CreateSNLDeleteMessages(CreateDeletes):
         #else:
         #    return None
 
-        paddingAndAligned = 'vtls' + '{:0>9}'.format(structure.rstrip('\n\r '))
-        return paddingAndAligned
+        #for SNL the procedure is a little bit tricky...
+        #the CBS delete messages should use a number with nine charracters padded with leading zeroes if less and an
+        #additional prefix vtls. Otherwise CBS seems not to be able (at least in the current implementation to delete
+        #the records
+
+        #for the raw data storage Mongo we need the original id together with the leading OAI repository label
+        #so I used the solution to return both numbers (getched by the iterator) with the disadvantage to implement a
+        #specialized processDeletes method being able to handle bothe numbers (not very nice...)
+
+        idOnly = structure.rstrip('\n\r ')
+        paddingAndAligned = 'vtls' + '{:0>9}'.format(idOnly)
+        return '(SNL)oai:helveticat.ch:' + idOnly + '###' + paddingAndAligned
+
+    def _createRecordStructureForMongo(self, recordID):
+        # 2016-04-18T07:18:44Z (as example)
+        #we need the datetimestamp for the crafted delete structure because for the majaority of the repositories
+        # (with the exception of Nebis and rero) we want to seperate this datetime-stamp in a single field of the
+        #Mongo Index. And because we configured this for the default case it causes troubles when datetime-stamps
+        #are not part of the crafted deleted structure
+
+        return "<record><header status=\"deleted\"><identifier>" + recordID + \
+                                 "</identifier>" + \
+               "<datestamp>" + self.getCurrentTimeFormated() + "</datestamp>" + \
+               "</header></record>"
+
+
 
 class CreateSummonDeleteMessages(CreateDeletes):
 
