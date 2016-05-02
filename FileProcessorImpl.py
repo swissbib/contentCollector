@@ -1,9 +1,13 @@
 import os
 import re
 import glob
+from os import listdir
+from os.path import isfile, join, isdir
+
 from swissbibUtilities import SwissbibUtilities, ErrorHashProcesing, ResultCollector, ErrorMongoProcessing, AdministrationOperation, ProcessSingleNebisRecord
 from pyexpat import ExpatError
 from swissbibHash import HashNebisMarcContent
+
 from datetime import datetime, timedelta
 
 from Context import ApplicationContext,HarvestingWriteContext,FileWebdavWriteContext,WriteContext,FilePushWriteContext
@@ -650,7 +654,6 @@ class FileWebDavProcessor(FileProcessor):
 
                 compoundOutputFileName = "".join([str(self.context.getConfiguration().getPrefixSummaryFile()),"-",fname])
 
-                #compoundOutputFileName = self._createCompoundFileName(fname)
 
                 wC = FileWebdavWriteContext(self.context)
                 self.context.setWriteContext(wC)
@@ -887,9 +890,135 @@ class WebDavFileProvider(SingleImportFileProvider):
 
 
 
+class SummonFileProcessor(FilePushProcessor):
+    def __init__(self, context):
+        FilePushProcessor.__init__(self, context)
+
+
+    def initialize(self):
+        SwissbibPreImportProcessor.initialize(self)
+
+        if not os.path.isdir(self.context.getConfiguration().getIncomingDir()):
+            os.system("mkdir -p " + self.context.getConfiguration().getIncomingDir())
+
+        #inconsistent naming for variables
+        if not os.path.isdir(self.context.getConfiguration().getNebisWorking()):
+            os.system("mkdir -p " + self.context.getConfiguration().getNebisWorking())
+        else:
+            os.system("rm -r " + self.context.getConfiguration().getNebisWorking())
+            os.system("mkdir -p " + self.context.getConfiguration().getNebisWorking())
+
+        if not os.path.isdir(self.context.getConfiguration().getDumpDir()):
+            os.system("mkdir -p " + self.context.getConfiguration().getDumpDir())
+        else:
+            os.system("rm -r " + self.context.getConfiguration().getDumpDir())
+            os.system("mkdir -p " + self.context.getConfiguration().getDumpDir())
+
+        if not os.path.isdir(self.context.getConfiguration().getNebisSrcDir()):
+            os.system("mkdir -p " + self.context.getConfiguration().getNebisSrcDir())
+
+    def lookUpContent(self):
+        # incomingDir =  self.context.getConfiguration().getIncomingDir()
+        os.chdir(self.context.getConfiguration().getIncomingDir())
+        searchedPrefix = self.context.getConfiguration().getNetworkPrefix() + "-"
+        # for incomingFile in [f for f in listdir(incomingDir) if isfile(join(incomingDir, f))]:
+        #    if (incomingFile.startswith(self.context.getConfiguration().getPrefixSummaryFile() + "-")):
+        #        hasDeletes = True
+        #        break
+        for fileName in os.popen('find . -name  ' + searchedPrefix + "*.xml"):
+            # remove carriage return characters from file name
+            orgFileName = fileName[:-1]
+            os.system("mv " + orgFileName + " " + self.context.getConfiguration().getNebisWorking())
+            time.sleep(2)
+
+            # onlyFile = os.path.basename(orgFileName)
+
+    def process(self):
+        os.chdir(self.context.getConfiguration().getNebisWorking())
+
+        searchedPrefix = self.context.getConfiguration().getNetworkPrefix() + "-"
+        pfilePart = re.compile(searchedPrefix + '(.*)', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        for fileName in glob.glob(self.context.getConfiguration().getNetworkPrefix() + '-*' ):
+
+            fileMatching = pfilePart.search(fileName)
+            if fileMatching:
+                currentDate = '{:%Y%m%d%H%M%S}'.format(datetime.now())
+                compoundOutputFile = "".join(
+                    [searchedPrefix, currentDate, '-', fileMatching.group(1)]).strip('\n')
+
+                try:
+
+                    wC = FileWebdavWriteContext(self.context)
+
+                    wC.setOutFileName(compoundOutputFile)
+                    self.context.setWriteContext(wC)
+
+                    sfC = SummonRecordProvider(self.context,fileName)
+
+                    self.processFileContent(sfC)
+
+                    wC.closeWriteContext()
+
+                    self.context.getResultCollector().addProcessedFile(fileName)
+
+                    os.chdir(self.context.getConfiguration().getNebisWorking())
+                    os.system("mv " + fileName + " " + self.context.getConfiguration().getNebisSrcDir() + os.sep +
+                              currentDate + '-' + fileName)
+
+                except Exception as pythonBasicException:
+
+                    # die alephfiles sollen nochmals verarbeitet werden
+                    os.chdir(self.context.getConfiguration().getNebisWorking())
+                    os.system("mv *.gz " + self.context.getConfiguration().getIncomingDir())
+                    raise pythonBasicException
+                finally:
+                    pass
+
+    def getRecordId(self, record):
+        # raise Exception("couldn't find a record ID in: " + record)
+
+        sysPatternT = self.pRecordId.search(record)
+        if not sysPatternT:
+            raise Exception("couldn't find a record ID in: " + record)
+        else:
+            #for the first time we don't use a prefix as part of the system number
+            #we have to evaluate this later
+            recordID = sysPatternT.group(1)
+
+        return recordID
+
+    def transformRecordNamespace(self, contentSingleRecord):
+        #no transformation for Summon Records
+        return contentSingleRecord
+
+
+class SummonRecordProvider(PushFileProvider):
+
+
+    def __init__(self,context,inputFileName):
+        SingleImportFileProvider.__init__(self,context)
+        self.pIterSingleRecord = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.inputFileName = inputFileName
 
 
 
+    def createGenerator(self):
+        workingDir = self.context.getConfiguration().getNebisWorking()
+        tfile = open(workingDir + os.sep + self.inputFileName, "r")
+        contentSingleFile = "".join(tfile.readlines())
+        tfile.close()
+        iterator = self.pIterSingleRecord.finditer(contentSingleFile)
+
+        numberOfRecords = 0
+
+        for matchRecord in iterator:
+            contentSingleRecord = matchRecord.group()
+            numberOfRecords += 1
+
+            yield contentSingleRecord
+
+        if numberOfRecords == 0:
+            raise Exception("Summon Record provider doesn't match any record")
 
 
 if __name__ == '__main__':
@@ -935,6 +1064,7 @@ if __name__ == '__main__':
     rCollector = None
     startTime = None
     nebisClient = None
+    appContext = None
 
     try:
 
@@ -972,7 +1102,7 @@ if __name__ == '__main__':
 
     except Exception as exception:
 
-        if not appContext is None and  not appContext.getWriteContext() is None:
+        if  not appContext is None and  not appContext.getWriteContext() is None:
             procMess=["Exception in FileProcessorImpl.py"]
 
             if not appContext.getConfiguration() is None:
