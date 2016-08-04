@@ -159,6 +159,8 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
 
     def __init__(self):
         PersistRecordMongo.__init__(self)
+        self.pHasMetastructure = re.compile('<header><identifier>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.pCoreRecord = re.compile('.*?(<record type="Authority".*?</record>).*?</metadata>.*?</record>.*',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
     def  processRecord(self, taskContext=None ):
         #todo: search for recordID if None -> use HasType
@@ -171,6 +173,20 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
         dbWrapper = taskContext.getDBWrapper()
         rid = taskContext.getID()
         record = taskContext.getRecord()
+        sMetaStrcuture = self.pHasMetastructure.search(record)
+        if sMetaStrcuture:
+
+            sCoreRecord = self.pCoreRecord.search(record)
+            if not sCoreRecord is None:
+                record = sCoreRecord.group(1)
+            else:
+                #this should not happen!
+                message = ["OAI metastructure was found but was not able to grep the core record\n",
+                           "docid: ", rid,
+                           "record: ", record]
+                raise ErrorMongoProcessing(message)
+
+
         isDeleted = taskContext.isDeleted()
 
         recordTimestamp = taskContext.getRecordTimestamp()
@@ -188,16 +204,16 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
             #if re.search("status=\"deleted\"",record,re.UNICODE | re.DOTALL):
             if isDeleted:
 
-                gndid = None
-                dbid = None
-                selectedGNDFields = {}
-                selectedMACSFields = {}
-                status = "deleted"
                 taskContext.getResultCollector().addRecordsDeleted(1)
 
+                deleteStructure = {"_id":rid}
+                tCollection.remove(deleteStructure)
+                return
+
+
             else:
-                cGNDContent = CollectGNDContent()
-                #cGNDContent = CollectGNDContentNoNamespace()
+                #cGNDContent = CollectGNDContent()
+                cGNDContent = CollectGNDContentNoNamespace()
                 xml.sax.parseString("".join(record), cGNDContent)
 
                 selectedGNDFields = cGNDContent.getSelectedValues()
@@ -214,21 +230,37 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
             mongoRecord = tCollection.find_one({"_id": rid})
             binary = Binary( zlib.compress(record,9))
 
+
+
+
+
             if not mongoRecord:
                 if status is None:
                     status = "new"
                     taskContext.getResultCollector().addRecordsToCBSInserted(1)
 
-                newRecord = {"_id":rid,
-                             "datum":str(datetime.now())[:10],
-                             "gndid": gndid,
-                             "dbid" : dbid,
-                             "record":binary,
-                             "gndfields":selectedGNDFields,
-                             "macsfields" : selectedMACSFields,
-                             "status":status,
-                             "recordTimestamp": recordTimestamp
-                }
+                if not recordTimestamp is None:
+
+                    newRecord = {"_id":rid,
+                                 "datum":str(datetime.now())[:10],
+                                 "gndid": gndid,
+                                 "dbid" : dbid,
+                                 "record":binary,
+                                 "gndfields":selectedGNDFields,
+                                 "macsfields" : selectedMACSFields,
+                                 "status":status,
+                                 "recordTimestamp": recordTimestamp
+                                }
+                else:
+                    newRecord = {"_id":rid,
+                                 "datum":str(datetime.now())[:10],
+                                 "gndid": gndid,
+                                 "dbid" : dbid,
+                                 "record":binary,
+                                 "gndfields":selectedGNDFields,
+                                 "macsfields" : selectedMACSFields,
+                                 "status":status
+                                 }
 
                 tCollection.insert(newRecord)
 
@@ -238,7 +270,7 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                     status = "updated"
                     taskContext.getResultCollector().addRecordsToCBSUpdated(1)
 
-                #todo: Suche nach deleted record!
+
                 mongoRecord["record"] = binary
                 mongoRecord["gndid"] = gndid
                 mongoRecord["dbid"] = dbid
@@ -246,7 +278,9 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                 mongoRecord["datum"] = str(datetime.now())[:10]
                 mongoRecord["gndfields"] = selectedGNDFields
                 mongoRecord["macsfields"] = selectedMACSFields
-                mongoRecord["recordTimestamp"] = recordTimestamp
+
+                if not recordTimestamp is None:
+                    mongoRecord["recordTimestamp"] = recordTimestamp
 
                 tCollection.save(mongoRecord,safe=True)
 
@@ -452,46 +486,15 @@ class PersistInitialDNBGNDRecordMongo(PersistDNBGNDRecordMongo):
         if taskContext is None or  not isinstance(taskContext,StoreNativeRecordContext):
             raise Exception("[harvestingTasks.py] in PersistInitialDNBGNDRecordMongo.procesRecord: no valid taskContext")
 
-        rid = taskContext.getID()
-        record = taskContext.getRecord()
-
 
 
         #clean up the record
+        #for GND we doesn't want to use whole OAI record as we did before
 
-        #pattern = re.compile("188519149")
-        #if pattern.search(record):
-        #    print "gefunden"
+        taskContext.setRecord(re.sub("<record .*?type=.*?>","<record type=\"Authority\" xmlns=\"http://www.loc.gov/MARC21/slim\">",
+                                     taskContext.getRecord(),re.UNICODE | re.DOTALL))
 
-        #sometimes there is a namespace witjout prefix in the source record
-        #this confuses the replace mechanism
-        record = re.sub("<record .*?type=.*?>","<record type=\"Authority\">",record,re.UNICODE | re.DOTALL)
-
-
-        recordNS = re.sub("<record type=\"Authority\">","<slim:record type=\"Authority\" xmlns:slim=\"http://www.loc.gov/MARC21/slim\">",record,re.UNICODE | re.DOTALL)
-        recordNSCtrl = re.sub("<controlfield","<slim:controlfield",recordNS,1000, re.UNICODE | re.DOTALL)
-        recordNSCtrlData = re.sub("<datafield","<slim:datafield",recordNSCtrl,2000, re.UNICODE | re.DOTALL)
-        recordNSCtrlDataSub = re.sub("<subfield","<slim:subfield",recordNSCtrlData,2000,re.UNICODE | re.DOTALL )
-        recordNSCtrlDataSubLeader = re.sub("<leader>","<slim:leader>",recordNSCtrlDataSub,re.UNICODE | re.DOTALL)
-
-        recordNSE = re.sub("</record>","</slim:record>",recordNSCtrlDataSubLeader,re.UNICODE | re.DOTALL)
-        recordNSCtrlE = re.sub("</controlfield>","</slim:controlfield>",recordNSE,1000, re.UNICODE | re.DOTALL)
-        recordNSCtrlDataE = re.sub("</datafield>","</slim:datafield>",recordNSCtrlE,2000, re.UNICODE | re.DOTALL)
-        recordNSCtrlDataSubE = re.sub("</subfield>","</slim:subfield>",recordNSCtrlDataE,2000,re.UNICODE | re.DOTALL)
-        recordNSCtrlDataSubLeaderE = re.sub("</leader>","</slim:leader>",recordNSCtrlDataSubE,re.UNICODE | re.DOTALL)
-
-        headerID =  re.sub("valuerecordid",rid,self.header,re.UNICODE | re.DOTALL)
-        headerIDDate = re.sub("valuedatestamp",'{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now()),headerID,re.UNICODE | re.DOTALL)
-
-        wholeRecord = headerIDDate + recordNSCtrlDataSubLeaderE + "</metadata>\n</record>"
-
-        #<record><header><identifier>valuerecordid</identifier><datestamp>valuedatestamp</datestamp><setSpec>authorities</setSpec></header><metadata>
-        #'{%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
-
-        tId = "(" + taskContext.getConfiguration().getNetworkPrefix() + ")" + rid
-        #todo necessary?
-        taskContext.setID(tId)
-        taskContext.setRecord(wholeRecord)
+        taskContext.setID("(" + taskContext.getConfiguration().getNetworkPrefix() + ")" + taskContext.getID())
         PersistDNBGNDRecordMongo.processRecord(self,taskContext=taskContext)
 
 

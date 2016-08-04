@@ -169,7 +169,10 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
         #self.writeContext = writeContext
 
         #was ist hier anders als bei Aleph!
-        self.pIterSingleRecord = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        if not self.context.getConfiguration().getIteratorOAIStructure() is None:
+            self.pIterSingleRecord = re.compile(self.context.getConfiguration().getIteratorOAIStructure(),re.UNICODE | re.DOTALL | re.IGNORECASE)
+        else:
+            self.pIterSingleRecord = re.compile('<record>.*?</record>',re.UNICODE | re.DOTALL | re.IGNORECASE)
         #GH: 16.10.2015 this works for Nebis because we are looking for the outer 'shell' of all <record>...</record> not qualified with additional namespaces.
         #we can use this for deleted as well as for full records. Compare example in exampleContentStructures/alma/deletedAndUpdatedRecords.xml
         #with Aleph this isn't as easy..  .
