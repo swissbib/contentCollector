@@ -671,7 +671,7 @@ class CollectGNDContentNoNamespace(CollectGNDContent):
             self.tagName = "controlfield_001"
         elif name.find('datafield') != -1:
             #print attrs.get("tag")
-            if attrs.get("tag") in self.searchedTagCodes:
+            if attrs.get("tag") in self.searchedTagCodes or attrs.get("tag") in self.searchedTagMacCodes:
                 self.lastValidTag = attrs.get("tag")
             else:
                 self.lastValidTag = None
@@ -705,10 +705,18 @@ class CollectGNDContentNoNamespace(CollectGNDContent):
             if self.procContentSubfield.__len__() > 0:
                 for key in self.procContentSubfield:
 
-                    if key in self.foundTagCodesValues:
-                        self.foundTagCodesValues[key].append("".join(self.procContentSubfield[key]))
+                    if self.lastValidTag in self.searchedTagCodes:
+                        if key in self.foundTagCodesValues:
+                            self.foundTagCodesValues[key].append("".join(self.procContentSubfield[key]))
+                        else:
+                            self.foundTagCodesValues[key] = ["".join(self.procContentSubfield[key])]
+                    elif self.lastValidTag in self.searchedTagMacCodes:
+                        if key in self.foundMACSTagCodesValues:
+                            self.foundMACSTagCodesValues[key].append("".join(self.procContentSubfield[key]))
+                        else:
+                            self.foundMACSTagCodesValues[key] = ["".join(self.procContentSubfield[key])]
                     else:
-                        self.foundTagCodesValues[key] = ["".join(self.procContentSubfield[key])]
+                        print "can't assign last valid to to any searchedTagCodes in endElement"
             self.procContentSubfield = {}
             self.lastValidSubFieldCode = None
         elif name.find('datafield') != -1:
