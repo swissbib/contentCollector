@@ -297,7 +297,13 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                        "SytemInfo: ", sys.exc_info()]
             #raise ErrorMongoProcessing(message)
 
+class PersistNLMongo(PersistRecordMongo):
 
+    def __init__(self):
+        PersistRecordMongo.__init__(self)
+
+    def  processRecord(self, taskContext=None ):
+        self.test = "hello"
 
 class PersistDSV11RecordMongo(PersistRecordMongo):
 

@@ -716,7 +716,9 @@ class HarvestingFilesConfigs(HarvestingConfigs):
                                'nebisSrcDir','clusteringDir',
                                'collectedDir','nebisWorking',
                                'reroWorking','reroSrcDir',
-                               'fileProcessorType','storeLatestProc'
+                               'fileProcessorType','storeLatestProc',
+                                'nlRawDataDir','nlScriptDir',
+                                'nlProcessedDataDir'
                                ]
 
         for tag in self.validTagsNebis:
@@ -838,6 +840,34 @@ class HarvestingFilesConfigs(HarvestingConfigs):
         self.tagsDict['basedirwebdav'] = value
 
 
+    def getNlRawDataDir(self):
+        return self.tagsDict['nlRawDataDir']
+
+
+    def setNlRawDataDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlRawDataDir", value)
+        self.tagsDict['nlRawDataDir'] = value
+
+
+    def getNlScriptDir(self):
+        return self.tagsDict['nlScriptDir']
+
+
+    def setNlScriptDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlScriptDir", value)
+        self.tagsDict['nlScriptDir'] = value
+
+
+    def getNlProcessedDataDir(self):
+        return self.tagsDict['nlProcessedDataDir']
+
+
+    def setNlProcessedDataDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlProcessedDataDir", value)
+        self.tagsDict['nlProcessedDataDir'] = value
 
 
 class HarvestingReadConfigs(HarvestingConfigs):
