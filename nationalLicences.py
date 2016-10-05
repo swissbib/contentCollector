@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import os
+import uuid
+
 from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 from swissbibHarvestingConfigs import HarvestingFilesConfigs
 from argparse import ArgumentParser
 from Context import ApplicationContext
 from swissbibUtilities import ResultCollector, SwissbibUtilities
-import os
 from datetime import datetime, timedelta
 from harvestingTasks import PersistNLMongo
 from FileProcessorImpl import FileProcessor, SingleImportFileProvider
-
-import re
-import glob
+from harvestingTasks import PersistRecordMongo, PersistNLMongo
+from Context import TaskContext, StoreNativeRecordContext
 
 
 
@@ -21,18 +22,76 @@ class NLFileProvider(SingleImportFileProvider):
     def __init__(self,context):
         SingleImportFileProvider.__init__(self,context)
 
+    def getFileContent(self, path, filename):
+        fileHandle =  open("".join([path,'/',filename]),"r")
+        content = fileHandle.read()
+        return content
+
 
     def createGenerator(self):
-        yield "here I am!"
+        processedDataDir = self.context.getConfiguration().getNlProcessedDataDir()
+
+        for root, dirs, files in os.walk(processedDataDir):
+            for file in files:
+                if file.lower().endswith('.xml'):
+                    yield self.getFileContent(root, file)
+
 
 
 class NationalLicencesProcessor(FileProcessor):
 
+
+    def lookUpContent(self):
+        #lookup raw content deliverd by publisher
+        #FTP lookup ? not done by now
+        #actually we have to put the raw content manually at the right place
+        pass
+
+
+    def preProcessContent(self):
+        pass
+        #start xslt transformation process created by Lionel
+
+    def initialize(self):
+        pass
+        #do we have to do some kind of initialization
+        #e.g. creation or deletion of directories??
+
+    def postProcessContent(self):
+        pass
+        #move the collected content (which should be aggregated into one single file)
+        #into the proper directory for CBS
+        #perhaps we can use at least part of the implementations available for other pipes
+
+
     def process(self):
 
         nlFileProvider = NLFileProvider(self.context)
-        self._processFileContent(nlFileProvider)
 
+        try:
+
+            for contentSingleRecord in nlFileProvider.createGenerator():
+                print contentSingleRecord
+                for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
+                    #write record into file which is going to be sent to CBS later
+                    #open question: waht do we do with DTD?
+                    try:
+                        #do we have to do any additional validation of the record?
+                        if isinstance(task, PersistNLMongo):
+                            #to do:  open question related to article ID
+                            taskContext = StoreNativeRecordContext(appContext=self.context,
+                                                                   rID=uuid.uuid4(), singleRecord=contentSingleRecord,
+                                                                   deleted=False)
+                        else:
+                            taskContext = TaskContext(appContext=self.context)
+                        task.processRecord(taskContext)
+                    except Exception as pythonBaseException:
+
+                        #write Exception into log
+                        continue
+
+        except Exception as processExcepion:
+            print processExcepion
 
 if __name__ == '__main__':
 

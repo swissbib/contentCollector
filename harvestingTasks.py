@@ -299,11 +299,51 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
 
 class PersistNLMongo(PersistRecordMongo):
 
+
     def __init__(self):
+        self.doctypePattern = re.compile('<!DOCTYPE.*?>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.articleStructure = re.compile('.*?(<article .*?</article>).*',re.UNICODE | re.DOTALL | re.IGNORECASE)
         PersistRecordMongo.__init__(self)
 
     def  processRecord(self, taskContext=None ):
-        self.test = "hello"
+        record = taskContext.getRecord()
+        dbWrapper = taskContext.getDBWrapper()
+        rid = taskContext.getID()
+
+        doctype = None
+
+        mhasDocType = self.doctypePattern.search(record)
+        if mhasDocType:
+            doctype = mhasDocType.group(0)
+        #this is a bit insecure - are there better ways to fetch only the article structure?
+        mArticleStructure = self.articleStructure.search(record)
+        articleStructure = None
+        if mArticleStructure:
+            articleStructure = mArticleStructure.group(1)
+        try:
+            tCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+
+
+            mongoRecord = tCollection.find_one({"_id": rid})
+            binary = Binary( zlib.compress(record,9))
+
+
+
+
+
+            newRecord = {"_id":rid,
+                         "datum":str(datetime.now())[:10],
+                         "record":binary,
+                        }
+
+            tCollection.insert(newRecord)
+
+
+        except Exception as tException:
+            print tException
+
+
+
 
 class PersistDSV11RecordMongo(PersistRecordMongo):
 
