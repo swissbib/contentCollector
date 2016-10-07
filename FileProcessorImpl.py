@@ -918,17 +918,18 @@ class SummonFileProcessor(FilePushProcessor):
             os.system("mkdir -p " + self.context.getConfiguration().getNebisSrcDir())
 
     def lookUpContent(self):
-        # incomingDir =  self.context.getConfiguration().getIncomingDir()
         os.chdir(self.context.getConfiguration().getIncomingDir())
-        searchedPrefix = self.context.getConfiguration().getNetworkPrefix() + "-"
-        # for incomingFile in [f for f in listdir(incomingDir) if isfile(join(incomingDir, f))]:
-        #    if (incomingFile.startswith(self.context.getConfiguration().getPrefixSummaryFile() + "-")):
-        #        hasDeletes = True
-        #        break
-        for fileName in os.popen('find . -name  ' + searchedPrefix + "*.xml"):
+        fileRegex = '"' + self.context.getConfiguration().getNetworkPrefix() + '-' + \
+            '*'  + self.context.getConfiguration().getFileNameSuffix() + '"'
+
+        #for fileName in os.popen('find . -mmin +2 -name ' + fileRegex):
+        for fileName in os.popen('find .  -name ' + fileRegex):
             # remove carriage return characters from file name
             orgFileName = fileName[:-1]
             os.system("mv " + orgFileName + " " + self.context.getConfiguration().getNebisWorking())
+            lastCharsOfFilename = orgFileName[-2:]
+            if  lastCharsOfFilename == self.context.getConfiguration().getFileNameSuffix():
+                os.system("gunzip " + self.context.getConfiguration().getNebisWorking() + os.sep + orgFileName)
             time.sleep(2)
 
             # onlyFile = os.path.basename(orgFileName)
@@ -1128,15 +1129,17 @@ if __name__ == '__main__':
 
     else:
 
+        networkPrefix = "default"
+        if not appContext.getConfiguration() is None:
+            networkPrefix = appContext.getConfiguration().getNetworkPrefix()
+
         if not appContext.getWriteContext() is None:
 
             appContext.getWriteContext().setAndWriteConfigAfterSuccess()
 
-
-
             procMess = ["start time: " +  str( startTime),
                         "end time: " + str(datetime.now()),
-                        "Nebis file(s) processed: " + "##".join(rCollector.getProcessedFile()),
+                        networkPrefix, " file(s) processed: " + "##".join(rCollector.getProcessedFile()),
                         "logged skipped records (if true): " + sConfigs.getSummaryContentFileSkipped(),
                         "records deleted: " + str(rCollector.getRecordsDeleted()) ,
                         "records skipped: " + str(rCollector.getRecordsSkipped()) ,
@@ -1157,7 +1160,7 @@ if __name__ == '__main__':
             procMess = ["WriteContext is None - after process finished regularly",
             "start time: " +  str( startTime),
             "end time: " + str(datetime.now()),
-            "Nebis file(s) processed: " + "##".join(rCollector.getProcessedFile()),
+            networkPrefix, " file(s) processed: " + "##".join(rCollector.getProcessedFile()),
             "logged skipped records (if true): " + sConfigs.getSummaryContentFileSkipped(),
             "records deleted: " + str(rCollector.getRecordsDeleted()) ,
             "records skipped: " + str(rCollector.getRecordsSkipped()) ,
@@ -1179,7 +1182,7 @@ if __name__ == '__main__':
             "going cto use logfile channel directly",
             "start time: " +  str( startTime),
             "end time: " + str(datetime.now()),
-            "Nebis file(s) processed: " + "##".join(rCollector.getProcessedFile()),
+            networkPrefix, " file(s) processed: " + "##".join(rCollector.getProcessedFile()),
             "logged skipped records (if true): " + sConfigs.getSummaryContentFileSkipped(),
             "records deleted: " + str(rCollector.getRecordsDeleted()) ,
             "records skipped: " + str(rCollector.getRecordsSkipped()) ,

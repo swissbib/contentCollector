@@ -277,7 +277,7 @@ class CreateSummonDeleteMessages(CreateDeletes):
                  applicationContext=None,  writeContext = None):
         CreateDeletes.__init__(self,applicationContext=applicationContext, writeContext=writeContext)
 
-        self.pSummonDeletedRecordId = re.compile('^(.*?),',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.pSummonDeletedRecordId = re.compile('^(.*?)$',re.UNICODE | re.DOTALL | re.IGNORECASE)
 
     def getIdFromStructure(self, structure):
         # default behaviour: structure is already the searched ID which should be deleted
