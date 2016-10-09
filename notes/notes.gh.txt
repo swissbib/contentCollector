@@ -1,0 +1,6 @@
+
+
+* konfigurationsfile nicht nur für gruyter erweitern (Pfad XSLT)
+* Ich brauche einen eigenen Writecontext (jetzt webdav, der in ein dump Verzeichnis schreibt)
+* write comtext muss geschlossen werden
+* werite context sollte schliessen und neu öffnen wenn eine gewisse Menge an sätzen -oder Grösse der Datei- überschritten ist

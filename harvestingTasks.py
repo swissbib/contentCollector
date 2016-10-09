@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+import StringIO
+
 from pymongo.connection import Connection
 from swissbibUtilities import ErrorMongoProcessing
 import sys
@@ -556,6 +558,26 @@ class RecordDirectToSearchEngine(HarvestingTask):
     def  processRecord(self, taskContext=None):
         pass
 
+
+class TransformJatsToMods(HarvestingTask):
+    def __init__(self):
+        HarvestingTask.__init__(self)
+
+        self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+    def processRecord(self, taskContext=None):
+        record = taskContext.getRecord()
+        #print record
+        mArticleStructure = self.articleStructure.search(record)
+        articleStructure = None
+        if mArticleStructure:
+            articleStructure = mArticleStructure.group(1)
+            f = StringIO.StringIO(articleStructure)
+            xml = etree.parse(f)
+            mods = taskContext.appContext.getModsTransformation()(xml)
+            taskContext.appContext.getWriteContext().writeItem(etree.tostring(mods))
+            #print(etree.tostring(mods, pretty_print=True))
 
 class CollectGNDContent(ContentHandler):
 

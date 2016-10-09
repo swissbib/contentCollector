@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import re
 
-from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo
+from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo, TransformJatsToMods
 from swissbibUtilities import MongoHostDefinition
 
 
@@ -718,7 +718,7 @@ class HarvestingFilesConfigs(HarvestingConfigs):
                                'reroWorking','reroSrcDir',
                                'fileProcessorType','storeLatestProc',
                                 'nlRawDataDir','nlScriptDir',
-                                'nlProcessedDataDir'
+                                'nlProcessedDataDir','jats2modsxsl'
                                ]
 
         for tag in self.validTagsNebis:
@@ -868,6 +868,17 @@ class HarvestingFilesConfigs(HarvestingConfigs):
         # self.tree.find(".//nebisWorking").text = value
         self._setLXMLTreeNodeValue("nlProcessedDataDir", value)
         self.tagsDict['nlProcessedDataDir'] = value
+        #jats2modsxsl
+
+
+    def getJats2modsxsl(self):
+        return self.tagsDict['jats2modsxsl']
+
+
+    def setJats2modsxsl(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("jats2modsxsl", value)
+        self.tagsDict['jats2modsxsl'] = value
 
 
 class HarvestingReadConfigs(HarvestingConfigs):

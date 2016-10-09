@@ -66,6 +66,24 @@ class ApplicationContext:
             return None
 
 
+class NLApplicationContext(ApplicationContext):
+    def __init__(self):
+        ApplicationContext.__init__(self)
+
+
+    def setModsTransformation(self,modsTransformation):
+        self.mTransformation = modsTransformation
+
+
+    def getModsTransformation(self):
+        if hasattr(self,'mTransformation'):
+            return self.mTransformation
+        else:
+            return None
+
+
+
+
 class WriteContext:
 
     def __init__(self,context):

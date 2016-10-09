@@ -6,13 +6,14 @@ import uuid
 from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 from swissbibHarvestingConfigs import HarvestingFilesConfigs
 from argparse import ArgumentParser
-from Context import ApplicationContext
+from Context import ApplicationContext, NLApplicationContext
 from swissbibUtilities import ResultCollector, SwissbibUtilities
 from datetime import datetime, timedelta
 from harvestingTasks import PersistNLMongo
-from FileProcessorImpl import FileProcessor, SingleImportFileProvider
-from harvestingTasks import PersistRecordMongo, PersistNLMongo
+from FileProcessorImpl import FileProcessor, SingleImportFileProvider,FileWebdavWriteContext
+from harvestingTasks import PersistRecordMongo, PersistNLMongo, TransformJatsToMods
 from Context import TaskContext, StoreNativeRecordContext
+from lxml import etree
 
 
 
@@ -71,13 +72,13 @@ class NationalLicencesProcessor(FileProcessor):
         try:
 
             for contentSingleRecord in nlFileProvider.createGenerator():
-                print contentSingleRecord
+                #print contentSingleRecord
                 for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
                     #write record into file which is going to be sent to CBS later
-                    #open question: waht do we do with DTD?
+                    #open question: what do we do with DTD?
                     try:
                         #do we have to do any additional validation of the record?
-                        if isinstance(task, PersistNLMongo):
+                        if isinstance(task, PersistNLMongo) or isinstance(task, TransformJatsToMods) :
                             #to do:  open question related to article ID
                             taskContext = StoreNativeRecordContext(appContext=self.context,
                                                                    rID=uuid.uuid4(), singleRecord=contentSingleRecord,
@@ -134,12 +135,25 @@ if __name__ == '__main__':
 
         startTime = datetime.now()
 
-        appContext = ApplicationContext()
+        appContext = NLApplicationContext()
         appContext.setConfiguration(sConfigs)
         appContext.setResultCollector(rCollector)
+        data = open(sConfigs.getJats2modsxsl(),'r')
+        xslt_content = data.read()
+        data.close()
+        xslt_root = etree.XML(xslt_content)
+        transform = etree.XSLT(xslt_root)
+        appContext.setModsTransformation(transform)
+
         mongoWrapper = MongoDBHarvestingWrapper(applicationContext=appContext)
 
         appContext.setMongoWrapper(mongoWrapper)
+
+        aggregatonFile = "".join([str(appContext.getConfiguration().getPrefixSummaryFile()),'-','{:%Y%m%d%H%M%S}'.format(datetime.now()), "-", 'gruyter.all.xml'])
+        wC = FileWebdavWriteContext(appContext)
+        appContext.setWriteContext(wC)
+
+        wC.setOutFileName(aggregatonFile)
 
         client = globals()[sConfigs.getFileProcessorType()](appContext)
 
