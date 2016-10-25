@@ -83,47 +83,18 @@ class NationalLicencesProcessor(FileProcessor):
                         #do we have to do any additional validation of the record?
                         if isinstance(task, PersistNLMongo) or isinstance(task, TransformJatsToMods) :
                             #extract id from swissbib-jats
-                            #extract source from swissbib-jats
                             #extract year from swissbib-jats (pyear, eyear or others)
 
 
                             recordTree=etree.fromstring(contentSingleRecord)
 
-                            # 1. Get id from XML
+                            # Get id from XML
                             xpathGetIdentifier = "/article/front/article-meta/custom-meta-group/custom-meta/meta-name[.='(swissbib)identifier']/following-sibling::*"
                             result=recordTree.xpath(xpathGetIdentifier)
                             if len(result)>0:
                                 id=result[0].text
-                            else:
+                            else:#almost never the case, but just to make sure
                                 id=uuid.uuid4()
-
-
-                            # 2. Get year from XML
-
-                            xpathGetPYear = "//pub-date[@pub-type='ppub']/year"
-                            xpathGetEYear = "//pub-date[@pub-type='epub']/year"
-                            xpathGetYear = "//pub-date/year"
-                            xpathCopyrightYear= "//copyright-year"
-
-                            resultPYear = recordTree.xpath(xpathGetPYear)
-                            resultEYear = recordTree.xpath(xpathGetEYear)
-                            resultYear = recordTree.xpath(xpathGetYear)
-                            resultCopyrightYear = recordTree.xpath(xpathCopyrightYear)
-
-                            year=0
-                            if len(resultPYear) > 0 :
-                                year=resultPYear[0].text
-                            elif len(resultEYear) > 0:
-                                year=resultEYear[0].text
-                            elif len(resultYear) > 0:
-                                year=resultYear[0].text
-                            elif len(resultCopyrightYear) > 0:
-                                year=resultCopyrightYear[0].text
-
-
-
-
-
 
                             taskContext = StoreNativeRecordContext(appContext=self.context,
                                                                    rID=id, singleRecord=contentSingleRecord,

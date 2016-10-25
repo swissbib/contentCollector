@@ -329,12 +329,35 @@ class PersistNLMongo(PersistRecordMongo):
             mongoRecord = tCollection.find_one({"_id": rid})
             binary = Binary( zlib.compress(record,9))
 
+            recordTree=etree.fromstring(record)
+
+            # Get year from XML
+            xpathGetPYear = "//pub-date[@pub-type='ppub']/year"
+            xpathGetEYear = "//pub-date[@pub-type='epub']/year"
+            xpathGetYear = "//pub-date/year"
+            xpathCopyrightYear= "//copyright-year"
+
+            resultPYear = recordTree.xpath(xpathGetPYear)
+            resultEYear = recordTree.xpath(xpathGetEYear)
+            resultYear = recordTree.xpath(xpathGetYear)
+            resultCopyrightYear = recordTree.xpath(xpathCopyrightYear)
+
+            year=0
+            if len(resultPYear) > 0 :
+                year=resultPYear[0].text
+            elif len(resultEYear) > 0:
+                year=resultEYear[0].text
+            elif len(resultYear) > 0:
+                year=resultYear[0].text
+            elif len(resultCopyrightYear) > 0:
+                year=resultCopyrightYear[0].text
 
 
 
 
             newRecord = {"_id":rid,
                          "datum":str(datetime.now())[:10],
+                         "year":year,
                          "record":binary,
                         }
 
