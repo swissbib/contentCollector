@@ -524,3 +524,22 @@ class StoreNativeRecordContext(TaskContext):
 
 
 
+class StoreNativeNLRecordContext(StoreNativeRecordContext):
+
+
+    def __init__(self, appContext=None, rID=None, jatsRecord="", deleted=False,
+                 modsRecord=""):
+        StoreNativeRecordContext.__init__(self,appContext,rID,jatsRecord,deleted)
+
+        self.modsRecord = modsRecord
+
+
+    def getModsRecord(self):
+        return self.modsRecord
+
+
+    # we need this method because in relation to GND (initial loading)
+    # sentences are going to be prepared before storing into Mongo
+    # this is done 'after' creation of the object
+    def setModsRecord(self, record):
+        self.modsRecord = record

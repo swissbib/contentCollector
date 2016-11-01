@@ -308,28 +308,32 @@ class PersistNLMongo(PersistRecordMongo):
         PersistRecordMongo.__init__(self)
 
     def  processRecord(self, taskContext=None ):
-        record = taskContext.getRecord()
+        jatsRecord = taskContext.getRecord()
+        modsRecord = taskContext.getModsRecord()
         dbWrapper = taskContext.getDBWrapper()
         rid = taskContext.getID()
 
-        doctype = None
+        #doctype = None
+        isDeleted = taskContext.isDeleted()
 
-        mhasDocType = self.doctypePattern.search(record)
-        if mhasDocType:
-            doctype = mhasDocType.group(0)
+        #seems we don't need this
+        #mhasDocType = self.doctypePattern.search(record)
+        #if mhasDocType:
+        #    doctype = mhasDocType.group(0)
         #this is a bit insecure - are there better ways to fetch only the article structure?
-        mArticleStructure = self.articleStructure.search(record)
-        articleStructure = None
-        if mArticleStructure:
-            articleStructure = mArticleStructure.group(1)
+        #mArticleStructure = self.articleStructure.search(record)
+        #articleStructure = None
+        #if mArticleStructure:
+        #    articleStructure = mArticleStructure.group(1)
         try:
             tCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
 
 
             mongoRecord = tCollection.find_one({"_id": rid})
-            binary = Binary( zlib.compress(record,9))
+            jatsBinary = Binary( zlib.compress(jatsRecord,9))
+            modsBinary = Binary( zlib.compress(modsRecord,9))
 
-            recordTree=etree.fromstring(record)
+            recordTree=etree.fromstring(jatsRecord)
 
             # Get year from XML
             xpathGetPYear = "//pub-date[@pub-type='ppub']/year"
@@ -352,19 +356,39 @@ class PersistNLMongo(PersistRecordMongo):
             elif len(resultCopyrightYear) > 0:
                 year=resultCopyrightYear[0].text
 
+            if not mongoRecord:
+                #record isn't in database so far
+                newRecord = {"_id":rid,
+                             "datum":str(datetime.now())[:10],
+                             "year":year,
+                             "status": "new",
+                             "jatsRecord":jatsBinary,
+                             "modsRecord": modsBinary
+                            }
+                tCollection.insert(newRecord)
+                taskContext.getResultCollector().addRecordsToCBSInserted(1)
 
+            else:
+                #there is already a record with the current id in the database
+                if isDeleted:
+                    status = "deleted"
+                    taskContext.getResultCollector().addRecordsDeleted(1)
 
+                else:
+                    status = "updated"
+                    taskContext.getResultCollector().addRecordsToCBSUpdated(1)
 
-            newRecord = {"_id":rid,
-                         "datum":str(datetime.now())[:10],
-                         "year":year,
-                         "record":binary,
-                        }
+                mongoRecord["year"] = year
+                mongoRecord["jatsRecord"] = jatsBinary
+                mongoRecord["modsRecord"] = modsBinary
+                mongoRecord["status"] = status
+                mongoRecord["datum"] = str(datetime.now())[:10]
 
-            tCollection.insert(newRecord)
+                tCollection.save(mongoRecord, safe=True)
 
 
         except Exception as tException:
+            #todo: do something meaningful with the exception
             print tException
 
 
@@ -582,24 +606,16 @@ class RecordDirectToSearchEngine(HarvestingTask):
         pass
 
 
-class TransformJatsToMods(HarvestingTask):
+class WriteModsForCBS(HarvestingTask):
     def __init__(self):
         HarvestingTask.__init__(self)
 
-        self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
-        self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
 
     def processRecord(self, taskContext=None):
-        record = taskContext.getRecord()
-        #print record
-        mArticleStructure = self.articleStructure.search(record)
-        articleStructure = None
-        if mArticleStructure:
-            articleStructure = mArticleStructure.group(1)
-            f = StringIO.StringIO(articleStructure)
-            xml = etree.parse(f)
-            mods = taskContext.appContext.getModsTransformation()(xml)
-            taskContext.appContext.getWriteContext().writeItem(etree.tostring(mods))
+
+        taskContext.appContext.getWriteContext().writeItem(taskContext.getModsRecord())
             #print(etree.tostring(mods, pretty_print=True))
 
 class CollectGNDContent(ContentHandler):

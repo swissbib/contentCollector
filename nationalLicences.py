@@ -11,11 +11,12 @@ from swissbibUtilities import ResultCollector, SwissbibUtilities
 from datetime import datetime, timedelta
 from harvestingTasks import PersistNLMongo
 from FileProcessorImpl import FileProcessor, SingleImportFileProvider,FileWebdavWriteContext
-from harvestingTasks import PersistRecordMongo, PersistNLMongo, TransformJatsToMods
-from Context import TaskContext, StoreNativeRecordContext
+from harvestingTasks import PersistRecordMongo, PersistNLMongo, WriteModsForCBS
+from Context import TaskContext, StoreNativeRecordContext, StoreNativeNLRecordContext
 from lxml import etree
 
-
+import re
+import StringIO
 
 
 
@@ -43,10 +44,44 @@ class NLFileProvider(SingleImportFileProvider):
 class NationalLicencesProcessor(FileProcessor):
 
 
+    def __init__(self,context):
+
+        FileProcessor.__init__(self,context)
+        self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
+    def _getRecordIdFromJats(self, jatsRecord):
+        recordTree = etree.fromstring(jatsRecord)
+
+        # Get id from XML
+        xpathGetIdentifier = "/article/front/article-meta/custom-meta-group/custom-meta/meta-name[.='(swissbib)identifier']/following-sibling::*"
+        result = recordTree.xpath(xpathGetIdentifier)
+        if len(result) > 0:
+            id = result[0].text
+        else:  # almost never the case, but just to make sure
+            id = uuid.uuid4()
+
+        return id
+
+    def _getModsStructure(self, jatsRecord):
+
+        mArticleStructure = self.articleStructure.search(jatsRecord)
+        articleStructure = None
+        if mArticleStructure:
+            articleStructure = mArticleStructure.group(1)
+            f = StringIO.StringIO(articleStructure)
+            xml = etree.parse(f)
+            mods = self.context.getModsTransformation()(xml)
+            return etree.tostring(mods)
+        else:
+            raise Exception("couldn't create mods structure")
+
+
     def lookUpContent(self):
         #lookup raw content deliverd by publisher
         #FTP lookup ? not done by now
-        #actually we have to put the raw content manually at the right place
+        #actually we have to put the raw content manually at the rightt place
         pass
 
 
@@ -75,38 +110,36 @@ class NationalLicencesProcessor(FileProcessor):
         try:
 
             for contentSingleRecord in nlFileProvider.createGenerator():
-                #print contentSingleRecord
-                for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
-                    #write record into file which is going to be sent to CBS later
-                    #open question: what do we do with DTD?
-                    try:
-                        #do we have to do any additional validation of the record?
-                        if isinstance(task, PersistNLMongo) or isinstance(task, TransformJatsToMods) :
-                            #extract id from swissbib-jats
-                            #extract year from swissbib-jats (pyear, eyear or others)
+
+                try:
+
+                    recordId = self._getRecordIdFromJats(contentSingleRecord)
+                    mods = self._getModsStructure(contentSingleRecord)
+                    #print contentSingleRecord
+                    for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
+                        #write record into file which is going to be sent to CBS later
+                        #open question: what do we do with DTD?
+                        try:
+                            #do we have to do any additional validation of the record?
+                            if isinstance(task, PersistNLMongo) or isinstance(task, WriteModsForCBS) :
+                                #extract id from swissbib-jats
+                                #extract year from swissbib-jats (pyear, eyear or others)
 
 
-                            recordTree=etree.fromstring(contentSingleRecord)
 
-                            # Get id from XML
-                            xpathGetIdentifier = "/article/front/article-meta/custom-meta-group/custom-meta/meta-name[.='(swissbib)identifier']/following-sibling::*"
-                            result=recordTree.xpath(xpathGetIdentifier)
-                            if len(result)>0:
-                                id=result[0].text
-                            else:#almost never the case, but just to make sure
-                                id=uuid.uuid4()
+                                taskContext = StoreNativeNLRecordContext(appContext=self.context,
+                                                                       rID=recordId,  jatsRecord=contentSingleRecord,
+                                                                       deleted=False,modsRecord=mods)
+                            else:
+                                taskContext = TaskContext(appContext=self.context)
+                            task.processRecord(taskContext)
+                        except Exception as pythonBaseException:
 
-                            taskContext = StoreNativeRecordContext(appContext=self.context,
-                                                                   rID=id, singleRecord=contentSingleRecord,
-                                                                   deleted=False)
-                        else:
-                            taskContext = TaskContext(appContext=self.context)
-                        task.processRecord(taskContext)
-                    except Exception as pythonBaseException:
-
-                        #write Exception into log
-                        continue
-
+                            #write Exception into log
+                            continue
+                except Exception as BaseException:
+                    #make some kind of error handling
+                    continue
         except Exception as processExcepion:
             print processExcepion
 
