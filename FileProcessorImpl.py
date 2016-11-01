@@ -919,8 +919,8 @@ class SummonFileProcessor(FilePushProcessor):
 
     def lookUpContent(self):
         os.chdir(self.context.getConfiguration().getIncomingDir())
-        fileRegex = '"' + self.context.getConfiguration().getNetworkPrefix() + '-' + \
-            '*'  + self.context.getConfiguration().getFileNameSuffix() + '"'
+        fileRegex = '"' + self.context.getConfiguration().getNetworkPrefix() + '-*'  +   '"' #\
+            #'*'  + self.context.getConfiguration().getFileNameSuffix() + '"'
 
         #for fileName in os.popen('find . -mmin +2 -name ' + fileRegex):
         for fileName in os.popen('find .  -name ' + fileRegex):
