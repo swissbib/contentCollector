@@ -68,7 +68,7 @@ try:
     oParser.add_argument("-f", "--inputFile", dest="inputFile", default=None)
     oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
     oParser.add_argument("-r", "--readTimestamps", dest="queriedTimeStamps", default=None)
-    oParser.add_argument("-d", "--docRecordField", dest="docRecordField", default=None );
+    oParser.add_argument("-d", "--docRecordField", dest="docRecordField", default=None )
 
 
     args = oParser.parse_args()
