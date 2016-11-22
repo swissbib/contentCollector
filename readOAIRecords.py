@@ -49,6 +49,13 @@ import re
 #--config=config.read/config.readMongo.nebis.xml --id=(NEBIS)aleph-publish:003065805
 
 
+#new: 2016-11-22 - export national licenses documents based on year
+#python readOAIRecords.py --config=config.read/config.readMongo.gruyter.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+#python readOAIRecords.py --config=config.read/config.readMongo.cambridge.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+#python readOAIRecords.py --config=config.read/config.readMongo.oxford.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+
+
+
 
 oParser = None
 args = None
