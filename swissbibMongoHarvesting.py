@@ -500,7 +500,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
-                    r = document["record"]
+                    docFieldName = docRecordField is not None and docRecordField or "record"
+                    r = document[docFieldName]
 
                     #wholeRecordUnzipped = zlib.decompress(r)
                     #we don't want to have any linebreaks because it's easier to work with
@@ -549,7 +550,11 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
             if (len(splitted) == 2):
                 dictCondition = {'datum': {splitted[0] : splitted[1]}}
             elif (len(splitted) == 3):
-                dictCondition = {splitted[0]: {splitted[1]: splitted[2]}}
+                #dictCondition = {splitted[0]: {splitted[1]: "".join(["'",splitted[2],"'"]) }}
+                #dictCondition = {'year': {'$lte': '2015'}}
+                #dictCondition = {str(splitted[0]) : {str(splitted[1]) : str(splitted[2])}}
+                dictCondition = {splitted[0]: {splitted[1] : splitted[2]}}
+                dictCondition = {'year': {'$lte' : '2015'}}
             else:
                 dictCondition = {}
 
