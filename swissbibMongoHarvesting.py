@@ -358,7 +358,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
 
     def readRecords(self,rId=None,countToRead=None,fileSize=None,outDir=None,condition=None,
-                    inputFile=None,userDatestamp=None):
+                    inputFile=None,userDatestamp=None, docRecordField=None):
 
         self.userDateStamp = userDatestamp
 
@@ -452,7 +452,9 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 print "<" + self.appContext.getConfiguration().getRoottag() + ">"
                 document = sourceCollection.find_one({"_id": rId})
                 if document:
-                    r = document["record"]
+
+                    docFieldName = docRecordField is not None and docRecordField or "record"
+                    r = document[docFieldName]
                     print  self.setCustomDatestamp(zlib.decompress(r))
                 print "</" + self.appContext.getConfiguration().getRoottag() + ">"
 
@@ -472,7 +474,10 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
-                    r = document["record"]
+                    docFieldName = docRecordField is not None and docRecordField or "record"
+                    r = document[docFieldName]
+
+                    #r = document["record"]
                     fileToWrite.write(self.setCustomDatestamp(zlib.decompress(r) + "\n"))
 
                     alreadyRead +=1
@@ -495,7 +500,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
-                    r = document["record"]
+                    docFieldName = docRecordField is not None and docRecordField or "record"
+                    r = document[docFieldName]
 
                     #wholeRecordUnzipped = zlib.decompress(r)
                     #we don't want to have any linebreaks because it's easier to work with
@@ -541,7 +547,17 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
         else:
             #we assume a date search with the operators $gt|$lt
             splitted = condition.split("#")
-            dictCondition = {'datum': {splitted[0] : splitted[1]}}
+            if (len(splitted) == 2):
+                dictCondition = {'datum': {splitted[0] : splitted[1]}}
+            elif (len(splitted) == 3):
+                #dictCondition = {splitted[0]: {splitted[1]: "".join(["'",splitted[2],"'"]) }}
+                #dictCondition = {'year': {'$lte': '2015'}}
+                #dictCondition = {str(splitted[0]) : {str(splitted[1]) : str(splitted[2])}}
+                dictCondition = {splitted[0]: {splitted[1] : splitted[2]}}
+                dictCondition = {'year': {'$lte' : '2015'}}
+            else:
+                dictCondition = {}
+
 
         return dictCondition
 

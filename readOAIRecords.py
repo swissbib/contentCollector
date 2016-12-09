@@ -39,7 +39,7 @@ import re
 
 #new: 2013-09-11
 #pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml --condition='$gt#2013-08-05' --size=1000 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
-#pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml  --number=2000 --condition='$gt#2013-08-05' --size=2 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
+#pythonmongo readOAIRecords.py --config=config.read/config.readMongo.idsbb.xml  --number=2000 --condition='year#$lte#2013-08-05' --size=2 --outDir=/var/swissbib/mongo/exportlocaldbs/idsbb
 
 
 #example fix records
@@ -47,6 +47,13 @@ import re
 
 #example
 #--config=config.read/config.readMongo.nebis.xml --id=(NEBIS)aleph-publish:003065805
+
+
+#new: 2016-11-22 - export national licenses documents based on year
+#python readOAIRecords.py --config=config.read/config.readMongo.gruyter.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+#python readOAIRecords.py --config=config.read/config.readMongo.cambridge.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+#python readOAIRecords.py --config=config.read/config.readMongo.oxford.xml --condition='year#$lte#2016' --outDir=/var/swissbib/mongo/exportlocaldbs/nl --docRecordField=[modsRecord|jatsRecord]
+
 
 
 
@@ -68,6 +75,7 @@ try:
     oParser.add_argument("-f", "--inputFile", dest="inputFile", default=None)
     oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
     oParser.add_argument("-r", "--readTimestamps", dest="queriedTimeStamps", default=None)
+    oParser.add_argument("-d", "--docRecordField", dest="docRecordField", default=None )
 
 
     args = oParser.parse_args()
@@ -115,7 +123,8 @@ try:
         readWrapper.readRecords(rId=args.idToRead,countToRead=args.countToRead,
                                     fileSize=args.fileSize, outDir=args.outDir,condition=args.condition,
                                     inputFile=args.inputFile,
-                                    userDatestamp=args.userDatestamp
+                                    userDatestamp=args.userDatestamp,
+                                    docRecordField=args.docRecordField
                                 )
 
 

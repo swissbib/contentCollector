@@ -66,6 +66,24 @@ class ApplicationContext:
             return None
 
 
+class NLApplicationContext(ApplicationContext):
+    def __init__(self):
+        ApplicationContext.__init__(self)
+
+
+    def setModsTransformation(self,modsTransformation):
+        self.mTransformation = modsTransformation
+
+
+    def getModsTransformation(self):
+        if hasattr(self,'mTransformation'):
+            return self.mTransformation
+        else:
+            return None
+
+
+
+
 class WriteContext:
 
     def __init__(self,context):
@@ -506,3 +524,22 @@ class StoreNativeRecordContext(TaskContext):
 
 
 
+class StoreNativeNLRecordContext(StoreNativeRecordContext):
+
+
+    def __init__(self, appContext=None, rID=None, jatsRecord="", deleted=False,
+                 modsRecord=""):
+        StoreNativeRecordContext.__init__(self,appContext,rID,jatsRecord,deleted)
+
+        self.modsRecord = modsRecord
+
+
+    def getModsRecord(self):
+        return self.modsRecord
+
+
+    # we need this method because in relation to GND (initial loading)
+    # sentences are going to be prepared before storing into Mongo
+    # this is done 'after' creation of the object
+    def setModsRecord(self, record):
+        self.modsRecord = record

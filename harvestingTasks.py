@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+import StringIO
+
 from pymongo.connection import Connection
 from swissbibUtilities import ErrorMongoProcessing
 import sys
@@ -297,6 +299,99 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                        "SytemInfo: ", sys.exc_info()]
             #raise ErrorMongoProcessing(message)
 
+class PersistNLMongo(PersistRecordMongo):
+
+
+    def __init__(self):
+        self.doctypePattern = re.compile('<!DOCTYPE.*?>',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        self.articleStructure = re.compile('.*?(<article .*?</article>).*',re.UNICODE | re.DOTALL | re.IGNORECASE)
+        PersistRecordMongo.__init__(self)
+
+    def  processRecord(self, taskContext=None ):
+        jatsRecord = taskContext.getRecord()
+        modsRecord = taskContext.getModsRecord()
+        dbWrapper = taskContext.getDBWrapper()
+        rid = taskContext.getID()
+
+        #doctype = None
+        isDeleted = taskContext.isDeleted()
+
+        #seems we don't need this
+        #mhasDocType = self.doctypePattern.search(record)
+        #if mhasDocType:
+        #    doctype = mhasDocType.group(0)
+        #this is a bit insecure - are there better ways to fetch only the article structure?
+        #mArticleStructure = self.articleStructure.search(record)
+        #articleStructure = None
+        #if mArticleStructure:
+        #    articleStructure = mArticleStructure.group(1)
+        try:
+            tCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+
+
+            mongoRecord = tCollection.find_one({"_id": rid})
+            jatsBinary = Binary( zlib.compress(jatsRecord,9))
+            modsBinary = Binary( zlib.compress(modsRecord,9))
+
+            recordTree=etree.fromstring(jatsRecord)
+
+            # Get year from XML
+            xpathGetPYear = "//pub-date[@pub-type='ppub']/year"
+            xpathGetEYear = "//pub-date[@pub-type='epub']/year"
+            xpathGetYear = "//pub-date/year"
+            xpathCopyrightYear= "//copyright-year"
+
+            resultPYear = recordTree.xpath(xpathGetPYear)
+            resultEYear = recordTree.xpath(xpathGetEYear)
+            resultYear = recordTree.xpath(xpathGetYear)
+            resultCopyrightYear = recordTree.xpath(xpathCopyrightYear)
+
+            year=0
+            if len(resultPYear) > 0 :
+                year=resultPYear[0].text
+            elif len(resultEYear) > 0:
+                year=resultEYear[0].text
+            elif len(resultYear) > 0:
+                year=resultYear[0].text
+            elif len(resultCopyrightYear) > 0:
+                year=resultCopyrightYear[0].text
+
+            if not mongoRecord:
+                #record isn't in database so far
+                newRecord = {"_id":rid,
+                             "datum":str(datetime.now())[:10],
+                             "year":year,
+                             "status": "new",
+                             "jatsRecord":jatsBinary,
+                             "modsRecord": modsBinary
+                            }
+                tCollection.insert(newRecord)
+                taskContext.getResultCollector().addRecordsToCBSInserted(1)
+
+            else:
+                #there is already a record with the current id in the database
+                if isDeleted:
+                    status = "deleted"
+                    taskContext.getResultCollector().addRecordsDeleted(1)
+
+                else:
+                    status = "updated"
+                    taskContext.getResultCollector().addRecordsToCBSUpdated(1)
+
+                mongoRecord["year"] = year
+                mongoRecord["jatsRecord"] = jatsBinary
+                mongoRecord["modsRecord"] = modsBinary
+                mongoRecord["status"] = status
+                mongoRecord["datum"] = str(datetime.now())[:10]
+
+                tCollection.save(mongoRecord, safe=True)
+
+
+        except Exception as tException:
+            #todo: do something meaningful with the exception
+            print tException
+
+
 
 
 class PersistDSV11RecordMongo(PersistRecordMongo):
@@ -510,6 +605,18 @@ class RecordDirectToSearchEngine(HarvestingTask):
     def  processRecord(self, taskContext=None):
         pass
 
+
+class WriteModsForCBS(HarvestingTask):
+    def __init__(self):
+        HarvestingTask.__init__(self)
+
+        #self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
+        #self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+    def processRecord(self, taskContext=None):
+
+        taskContext.appContext.getWriteContext().writeItem(taskContext.getModsRecord())
+            #print(etree.tostring(mods, pretty_print=True))
 
 class CollectGNDContent(ContentHandler):
 

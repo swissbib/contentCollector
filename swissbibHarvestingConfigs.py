@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import re
 
-from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo
+from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo, WriteModsForCBS
 from swissbibUtilities import MongoHostDefinition
 
 
@@ -716,7 +716,9 @@ class HarvestingFilesConfigs(HarvestingConfigs):
                                'nebisSrcDir','clusteringDir',
                                'collectedDir','nebisWorking',
                                'reroWorking','reroSrcDir',
-                               'fileProcessorType','storeLatestProc'
+                               'fileProcessorType','storeLatestProc',
+                                'nlRawDataDir','nlScriptDir',
+                                'nlProcessedDataDir','jats2modsxsl'
                                ]
 
         for tag in self.validTagsNebis:
@@ -838,6 +840,45 @@ class HarvestingFilesConfigs(HarvestingConfigs):
         self.tagsDict['basedirwebdav'] = value
 
 
+    def getNlRawDataDir(self):
+        return self.tagsDict['nlRawDataDir']
+
+
+    def setNlRawDataDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlRawDataDir", value)
+        self.tagsDict['nlRawDataDir'] = value
+
+
+    def getNlScriptDir(self):
+        return self.tagsDict['nlScriptDir']
+
+
+    def setNlScriptDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlScriptDir", value)
+        self.tagsDict['nlScriptDir'] = value
+
+
+    def getNlProcessedDataDir(self):
+        return self.tagsDict['nlProcessedDataDir']
+
+
+    def setNlProcessedDataDir(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("nlProcessedDataDir", value)
+        self.tagsDict['nlProcessedDataDir'] = value
+        #jats2modsxsl
+
+
+    def getJats2modsxsl(self):
+        return self.tagsDict['jats2modsxsl']
+
+
+    def setJats2modsxsl(self, value):
+        # self.tree.find(".//nebisWorking").text = value
+        self._setLXMLTreeNodeValue("jats2modsxsl", value)
+        self.tagsDict['jats2modsxsl'] = value
 
 
 class HarvestingReadConfigs(HarvestingConfigs):
