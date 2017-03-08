@@ -317,19 +317,6 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
 
 
 
-                if self.context.getConfiguration().isSkipRecords():
-                    self._processSkipRecord(contentSingleRecord)
-
-
-
-                else:
-
-                    self.context.getResultCollector().addRecordsToCBSNoSkip(1)
-                    #attention: we use the file.writelines function which needs Strings - no unicode!
-                    self.context.getWriteContext().writeItem(contentSingleRecord)
-
-
-                self.context.getResultCollector().setIncrementProcessedRecordNoFurtherDetails()
                 for taskName,task  in  self.context.getConfiguration().getDedicatedTasks().items():
 
                     try:
@@ -354,6 +341,15 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                         self.context.getWriteContext().writeErrorLog(header=["error while processing a task"],message=[str(pythonBaseException), contentSingleRecord])
                         continue
 
+                if self.context.getConfiguration().isSkipRecords():
+                    self._processSkipRecord(contentSingleRecord)
+                else:
+
+                    self.context.getResultCollector().addRecordsToCBSNoSkip(1)
+                    #attention: we use the file.writelines function which needs Strings - no unicode!
+                    self.context.getWriteContext().writeItem(contentSingleRecord)
+
+                self.context.getResultCollector().setIncrementProcessedRecordNoFurtherDetails()
 
 
 
