@@ -453,8 +453,9 @@ class FileWebdavWriteContext(WriteContext):
 class TaskContext:
 
 
-    def __init__(self,appContext=None):
+    def __init__(self,appContext=None,defaultRecord=None):
         self.appContext = appContext
+        self.defaultRecord = defaultRecord
 
 
     def getDBWrapper(self):

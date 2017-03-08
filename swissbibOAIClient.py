@@ -22,7 +22,7 @@ import urllib2
 from urllib import urlencode
 from FileProcessorImpl import  ApplicationContext
 from swissbibPreImportProcessor import SwissbibPreImportProcessor
-from harvestingTasks import PersistRecordMongo,PersistDNBGNDRecordMongo
+from harvestingTasks import PersistRecordMongo,PersistDNBGNDRecordMongo,CleanUpServal, CleanUpHemu
 from Context import StoreNativeRecordContext, TaskContext
 
 
@@ -338,10 +338,17 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
                             taskContext = StoreNativeRecordContext(appContext=self.context,
                                                                     rID=recordId,singleRecord=contentSingleRecord,
                                                                     deleted=recordDeleted)
+                            task.processRecord(taskContext)
+                        elif isinstance(task,CleanUpServal) or isinstance(task,CleanUpHemu):
+                            taskContext = TaskContext(appContext=self.context,defaultRecord=contentSingleRecord)
+                            task.processRecord(taskContext)
+                            #these plugins are used to clean-up the record instance
+                            #by now we don't use the return value of other plugins
+                            #refactoring should be done
+                            contentSingleRecord = taskContext.defaultRecord
                         else:
                             taskContext = TaskContext(appContext=self.context)
-
-                        task.processRecord(taskContext)
+                            task.processRecord(taskContext)
                     except Exception as pythonBaseException:
 
                         self.context.getWriteContext().writeErrorLog(header=["error while processing a task"],message=[str(pythonBaseException), contentSingleRecord])

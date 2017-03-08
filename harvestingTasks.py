@@ -36,7 +36,36 @@ class HarvestingTask():
 
 
 
-class PersistRecordMongo(HarvestingTask):
+class CleanUpServal(HarvestingTask):
+
+    def __init__(self):
+        self.substituteChars = '<record xmlns="http://www.openarchives.org/OAI/2.0/">\s*<header>'
+        #self.substituteChars = '<record xmlns="http://www.openarchives.org/OAI/2.0/"><header>'
+        HarvestingTask.__init__(self)
+    def  processRecord(self,taskContext=None ):
+        sR = taskContext.defaultRecord
+        taskContext.defaultRecord = re.sub(self.substituteChars, '<record><header>', sR)
+
+
+class CleanUpHemu(HarvestingTask):
+
+    def __init__(self):
+        self.subCollectionAttribute = '<collection xmlns='
+        self.subRecordOpen = '<record>\s*<leader>'
+        self.subRecordClose = '</datafield>\s*</record>'
+
+
+        #self.substituteChars = '<re    cord xmlns="http://www.openarchives.org/OAI/2.0/"><header>'
+        HarvestingTask.__init__(self)
+    def  processRecord(self,taskContext=None ):
+        sR = taskContext.defaultRecord
+        newRecord1 = re.sub(self.subCollectionAttribute, '<collection xmlns:marc=', sR)
+        newRecord2 = re.sub(self.subRecordOpen, '<marc:record><leader>', newRecord1)
+        taskContext.defaultRecord = re.sub(self.subRecordClose, '</datafield></marc:record>', newRecord2)
+
+
+
+class PersistRecordMongo(HarvestingTask) :
 
     def __init__(self):
         HarvestingTask.__init__(self)

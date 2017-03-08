@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import re
 
-from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo, WriteModsForCBS
+from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo, WriteModsForCBS, CleanUpServal, CleanUpHemu
 from swissbibUtilities import MongoHostDefinition
 
 
