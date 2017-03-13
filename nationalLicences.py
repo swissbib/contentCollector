@@ -36,7 +36,7 @@ class NLFileProvider(SingleImportFileProvider):
 
         for root, dirs, files in os.walk(processedDataDir):
             for file in files:
-                if file.lower().endswith('.xml'):
+                if file.lower().endswith('.xml') or file.lower().endswith('.xml.meta'):
                     yield self.getFileContent(root, file)
 
 
@@ -47,35 +47,27 @@ class NationalLicencesProcessor(FileProcessor):
     def __init__(self,context):
 
         FileProcessor.__init__(self,context)
-        self.doctypePattern = re.compile('<!DOCTYPE.*?>', re.UNICODE | re.DOTALL | re.IGNORECASE)
-        self.articleStructure = re.compile('.*?(<article .*?</article>).*', re.UNICODE | re.DOTALL | re.IGNORECASE)
 
 
-    def _getRecordIdFromJats(self, jatsRecord):
-        recordTree = etree.fromstring(jatsRecord)
+    def _getRecordIdFromMods(self, modsRecord):
+        recordTree = etree.fromstring(modsRecord)
 
         # Get id from XML
-        xpathGetIdentifier = "/article/front/article-meta/custom-meta-group/custom-meta/meta-name[.='(swissbib)identifier']/following-sibling::*"
+        xpathGetIdentifier = "//identifier[@type='swissbib']"
         result = recordTree.xpath(xpathGetIdentifier)
         if len(result) > 0:
             id = result[0].text
         else:  # almost never the case, but just to make sure
-            id = uuid.uuid4()
+            id = str(uuid.uuid4())
 
         return id
 
-    def _getModsStructure(self, jatsRecord):
+    def _getModsStructure(self, sourceRecord):
 
-        mArticleStructure = self.articleStructure.search(jatsRecord)
-        articleStructure = None
-        if mArticleStructure:
-            articleStructure = mArticleStructure.group(1)
-            f = StringIO.StringIO(articleStructure)
-            xml = etree.parse(f)
-            mods = self.context.getModsTransformation()(xml)
-            return etree.tostring(mods)
-        else:
-            raise Exception("couldn't create mods structure")
+        f = StringIO.StringIO(sourceRecord)
+        xml = etree.parse(f)
+        mods = self.context.getModsTransformation()(xml)
+        return etree.tostring(mods)
 
 
     def lookUpContent(self):
@@ -113,8 +105,8 @@ class NationalLicencesProcessor(FileProcessor):
 
                 try:
 
-                    recordId = self._getRecordIdFromJats(contentSingleRecord)
                     mods = self._getModsStructure(contentSingleRecord)
+                    recordId = self._getRecordIdFromMods(mods)
                     #print contentSingleRecord
                     for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
                         #write record into file which is going to be sent to CBS later
