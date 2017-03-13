@@ -53,8 +53,11 @@ class NationalLicencesProcessor(FileProcessor):
         recordTree = etree.fromstring(modsRecord)
 
         # Get id from XML
-        xpathGetIdentifier = "//identifier[@type='swissbib']"
-        result = recordTree.xpath(xpathGetIdentifier)
+        xpathGetIdentifier = "//ns:identifier[@type='swissbib']"
+        result = recordTree.xpath(xpathGetIdentifier, namespaces={'ns': 'http://www.loc.gov/mods/v3'})
+
+
+
         if len(result) > 0:
             id = result[0].text
         else:  # almost never the case, but just to make sure
