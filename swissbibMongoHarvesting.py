@@ -550,11 +550,12 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
             if (len(splitted) == 2):
                 dictCondition = {'datum': {splitted[0] : splitted[1]}}
             elif (len(splitted) == 3):
-                #dictCondition = {splitted[0]: {splitted[1]: "".join(["'",splitted[2],"'"]) }}
-                #dictCondition = {'year': {'$lte': '2015'}}
-                #dictCondition = {str(splitted[0]) : {str(splitted[1]) : str(splitted[2])}}
-                dictCondition = {splitted[0]: {splitted[1] : splitted[2]}}
-                dictCondition = {'year': {'$lte' : '2015'}}
+                dictCondition = {
+                    '$and': [
+                        {splitted[0]: {splitted[1]: int(splitted[2])}}, # for example 'year#$lte#2015'
+                        {'includedInNationalLicences': { '$not': { '$eq' : 'no' }} } #does not include articles which are not part of National Licences
+                    ]
+                }
             else:
                 dictCondition = {}
 
