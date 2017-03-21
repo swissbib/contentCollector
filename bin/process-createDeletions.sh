@@ -11,7 +11,7 @@ CONFDIR=${CONTENTENV_HOME}/confdir
 
 
 #DEFAULTREPOS="snl"
-DEFAULTREPOS="snl ecod sersol"
+DEFAULTREPOS="snl ecod sersol idsbb"
 
 
 
