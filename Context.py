@@ -197,7 +197,7 @@ class WriteContext:
             os.chdir(cwd)
 
 
-    def setAndWriteConfigAfterSuccess(self):
+    def setAndWriteConfigAfterSuccess(self, setTimeStamp = True):
 
         if not self.appContext is None and not self.appContext.getConfiguration() is None:
 
@@ -206,7 +206,10 @@ class WriteContext:
             #we change at first directory because configfile-path might be relative
             os.chdir(self.appContext.getConfiguration().getApplicationDir())
 
-            self.appContext.getConfiguration().setTimestampUTC(self.nextTimeStamp)
+            #we had the problem with manually provided delete messages. In this case we must not
+            #set any new time
+            if (setTimeStamp):
+                self.appContext.getConfiguration().setTimestampUTC(self.nextTimeStamp)
             self.appContext.getConfiguration().setActionFinished("yes")
             self.appContext.getConfiguration().setCompleteListSize(str(self.appContext.getResultCollector().getNumberAllProcessedRecords()))
 
@@ -219,7 +222,6 @@ class WriteContext:
             os.chdir(cwd)
         else:
             print "writing of configuration file after successful processing wasn't possible - why is Appcontext or write Context None??"
-
 
 
 

@@ -473,7 +473,7 @@ if __name__ == '__main__':
     else:
 
         if not writeContext is None:
-            writeContext.setAndWriteConfigAfterSuccess()
+            writeContext.setAndWriteConfigAfterSuccess(setTimeStamp=False)
 
 
             usedOAIParameters = ""
