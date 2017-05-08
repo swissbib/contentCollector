@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DATA_BASE_DIR=/swissbib/harvesting
 CONTENTENV_HOME=/home/harvester/envContentCollector
@@ -14,13 +14,15 @@ CONFFILE=$1
 
 fileNameOnly=$(basename "$CONFFILE")
 
-IFS='.' read -r -a arrayOfFileName <<< "$fileNameOnly"
+#we can't use the old (RedHat) mechanism to read a part of the filename anymore
+ #this isn't a good solution because it expects a filename with a special name
+ #don't have the time to make it more generic at the moment...
+prefixLockfile=`echo $fileNameOnly  | sed 's/config\.\(.*\)\.prod\.xml/\1/'`
 
-prefixLockfile="${arrayOfFileName[1]}"
 LOCKFILE=${CONFDIR}/${prefixLockfile}.lock
 
 if [ -e ${LOCKFILE} ]; then
-    echo -n "${arrayOfFileName[1]} is locked, probably by another process: "
+    echo -n "${prefixLockfile} is locked, probably by another process: "
     cat ${LOCKFILE}
     exit 1
 else
