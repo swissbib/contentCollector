@@ -2,7 +2,6 @@
 from lxml import etree
 import StringIO
 
-from pymongo.connection import Connection
 from swissbibUtilities import ErrorMongoProcessing
 import sys
 import zlib

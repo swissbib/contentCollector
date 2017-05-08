@@ -1,5 +1,5 @@
 
-from pymongo.connection import Connection
+from pymongo import MongoClient
 from datetime import datetime
 import sys
 import hashlib
@@ -31,10 +31,11 @@ class MongoDBHarvestingWrapper():
             host = self.appContext.getConfiguration().getMongoHosts() [key]
             sConnection = host.getConnection()
             dbConnection = {}
-            connection = Connection(sConnection)
-            dbConnection["connection"] = connection
+            client = MongoClient(sConnection)
+            #connection = Connection(sConnection)
+            dbConnection["connection"] = client
             #dbConnection["dbname"] = host.getDB()
-            dbConnection["db"] = connection[host.getDB()]
+            dbConnection["db"] = client[host.getDB()]
 
             collections = {}
             for key in host.getCollections():
