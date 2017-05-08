@@ -2,21 +2,11 @@
 
 DATA_BASE_DIR=/swissbib/harvesting
 CONTENTENV_HOME=/home/harvester/envContentCollector
-VIRTUAL_PYTHON_ENV=${CONTENTENV_HOME}/env
 PROCESS_DIR=${CONTENTENV_HOME}/bin
 RUNDIR=${DATA_BASE_DIR}/rundir
 CONFDIR=${CONTENTENV_HOME}/confdir
 
 
-#echo $CONFDIR
-#echo $RUNDIR
-#echo $PROCESS_DIR
-#echo $VIRTUAL_PYTHON_ENV
-#echo $CONTENTENV_HOME
-#echo $DATA_BASE_DIR
-
-
-#DEFAULTREPOS="snl sbt idsbb idslu idssg1 idssg2 POSTERS zora retroseals abn bgr sgbn"
 DEFAULTREPOS="boris libib serval ecod snl sbt idsbb idslu idssg1 POSTERS zora retroseals abn bgr sgbn alex vaud_lib vaud_school"
 
 
@@ -40,12 +30,8 @@ for repo in ${repos}; do
   fi
 
   CONFIG=${CONFDIR}/config.${repo}.prod.xml
-  #echo $CONFIG
-  #echo ${VIRTUAL_PYTHON_ENV}/bin/python
-  #echo ${PROCESS_DIR}/swissbibHarvesting.py
 
-  ${VIRTUAL_PYTHON_ENV}/bin/python  ${PROCESS_DIR}/swissbibHarvesting.py --config=${CONFIG} >> ${RUNDIR}/process-harvesting-python.log 2>&1
-  #${VIRTUAL_PYTHON_ENV}/bin/python  ${PROCESS_DIR}/swissbibHarvesting.py --config=${CONFIG} 
+  python  ${PROCESS_DIR}/swissbibHarvesting.py --config=${CONFIG} >> ${RUNDIR}/process-harvesting-python.log 2>&1
 
   rm ${LOCKFILE}
 

@@ -2,7 +2,6 @@
 
 DATA_BASE_DIR=/swissbib/harvesting
 CONTENTENV_HOME=/home/harvester/envContentCollector
-VIRTUAL_PYTHON_ENV=${CONTENTENV_HOME}/env
 PROCESS_DIR=${CONTENTENV_HOME}/bin
 RUNDIR=${DATA_BASE_DIR}/rundir
 CONFDIR=${CONTENTENV_HOME}/confdir
@@ -35,7 +34,7 @@ for repo in ${repos}; do
   fi
 
   CONFIG=${CONFDIR}/config.${repo}.prod.xml
-  ${VIRTUAL_PYTHON_ENV}/bin/python  ${PROCESS_DIR}/createOAIDeletes.py --config=${CONFIG} >> ${RUNDIR}/process-create-deletes.log 2>&1
+  python  ${PROCESS_DIR}/createOAIDeletes.py --config=${CONFIG} >> ${RUNDIR}/process-create-deletes.log 2>&1
 
   rm ${LOCKFILE}
 

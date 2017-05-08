@@ -2,7 +2,6 @@
 
 DATA_BASE_DIR=/swissbib/harvesting
 CONTENTENV_HOME=/home/harvester/envContentCollector
-VIRTUAL_PYTHON_ENV=${CONTENTENV_HOME}/env
 PROCESS_DIR=${CONTENTENV_HOME}/bin
 RUNDIR=${DATA_BASE_DIR}/rundir
 CONFDIR=${CONTENTENV_HOME}/confdir
@@ -27,7 +26,7 @@ if [ -e ${LOCKFILE} ]; then
 else
     cd ${PROCESS_DIR}
     echo $$ >${LOCKFILE}
-    ${VIRTUAL_PYTHON_ENV}/bin/python  ${PROCESS_DIR}/FileProcessorImpl.py --config=${CONFDIR}/${CONFFILE}  >> ${RUNDIR}/processFileImpl.log 2>&1
+    python  ${PROCESS_DIR}/FileProcessorImpl.py --config=${CONFDIR}/${CONFFILE}  >> ${RUNDIR}/processFileImpl.log 2>&1
     rm $LOCKFILE
 fi
 
