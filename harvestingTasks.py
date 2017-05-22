@@ -163,7 +163,11 @@ class PersistRecordMongo(HarvestingTask) :
                     mongoRecord["status"] = status
                     mongoRecord["datum"] = str(datetime.now())[:10]
 
-                tCollection.save(mongoRecord,safe=True)
+                #save is deprecated  in pymongo version > 3
+                #tCollection.save(mongoRecord)
+                tCollection.replace_one({"_id":rid }, mongoRecord)
+                #count = result.matched_count
+                #modified = result.modified_count
 
 
         except:
@@ -312,7 +316,8 @@ class PersistDNBGNDRecordMongo(PersistRecordMongo):
                 if not recordTimestamp is None:
                     mongoRecord["recordTimestamp"] = recordTimestamp
 
-                tCollection.save(mongoRecord,safe=True)
+                #tCollection.save(mongoRecord,safe=True)
+                tCollection.replace_one({"_id": rid}, mongoRecord)
 
 
         except Exception as tException:
@@ -402,7 +407,8 @@ class PersistNLMongo(PersistRecordMongo):
                 mongoRecord["status"] = status
                 mongoRecord["datum"] = str(datetime.now())[:10]
 
-                tCollection.save(mongoRecord, safe=True)
+                #tCollection.save(mongoRecord, safe=True)
+                tCollection.replace_one({"_id": rid}, mongoRecord)
 
 
         except Exception as tException:
@@ -2285,7 +2291,8 @@ class PersistSpringerNLMongo(PersistNLMongo):
                 mongoRecord["journalId"] = journalId
                 mongoRecord["includedInNationalLicences"] = includedInNationalLicences
 
-                tCollection.save(mongoRecord, safe=True)
+                #tCollection.save(mongoRecord, safe=True)
+                tCollection.replace_one({"_id": rid}, mongoRecord)
 
 
         except Exception as tException:
@@ -2438,7 +2445,8 @@ class PersistDSV11RecordMongo(PersistRecordMongo):
                 mongoRecord["additionalvalues"] = selectedAdditionalValues
                 mongoRecord["recordTimestamp"] = recordTimestamp
 
-                tCollection.save(mongoRecord,safe=True)
+                #tCollection.save(mongoRecord,safe=True)
+                tCollection.replace_one({"_id": rid}, mongoRecord)
 
 
         except Exception as tException:

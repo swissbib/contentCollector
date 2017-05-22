@@ -135,7 +135,8 @@ class MongoDBHarvestingWrapper():
                 mongoRecord["sizeHistory"] = len(mongoRecord["history"])
                 mongoRecord["lastdate"] = str(datetime.now())[:10]
                 mongoRecord["laststatus"] = "skipped"
-                tCollection.save(mongoRecord,safe=True)
+                #tCollection.save(mongoRecord,safe=True)
+                tCollection.replace_one({"_id": docId}, mongoRecord)
                 #self.db[self.collectionName].save(mongoRecord)
                 #self.collectionRecords.save(mongoRecord,safe=True)
 
@@ -157,7 +158,8 @@ class MongoDBHarvestingWrapper():
                 mongoRecord["laststatus"] = "updatedToCBS"
                 mongoRecord["hash"] = hashValue
                 #self.db[self.collectionName].save(mongoRecord)
-                tCollection.save(mongoRecord,safe=True)
+                #tCollection.save(mongoRecord,safe=True)
+                tCollection.replace_one({"_id": docId}, mongoRecord)
                 #self.collectionRecords.save(mongoRecord,safe=True)
 
                 status = "writeToFileUpdated"
@@ -650,7 +652,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                         mongoRecord["record"] = binary
                         mongoRecord["status"] = _values["status"]
                         mongoRecord["datum"] = _values["date"]
-                        sourceCollection.save(mongoRecord,safe=True)
+                        sourceCollection.replace_one({"_id": _values["id"]}, mongoRecord)
+                        #sourceCollection.save(mongoRecord,safe=True)
 
                     itemLines = []
                     start = False
@@ -788,6 +791,7 @@ class MongoDBHarvestingWrapperFixRecords(MongoDBHarvestingWrapperAdmin):
 
         for document in result:
             recordToDeleteCompressed = document["record"]
+            docid = document["_id"]
             recordToDelete =  zlib.decompress(recordToDeleteCompressed)
 
             spReroDeletedRecordsToSubstitutePattern = self.pReroDeleteRecord.search(recordToDelete)
@@ -795,7 +799,9 @@ class MongoDBHarvestingWrapperFixRecords(MongoDBHarvestingWrapperAdmin):
                 modifiedRecord= spReroDeletedRecordsToSubstitutePattern.group(1) + "</record>"
                 binarymodifiedRecord = Binary( zlib.compress(modifiedRecord,9))
                 document["record"] = binarymodifiedRecord
-                sourceCollection.save(document,safe=True)
+                #attention: save is deprecated - question: is it possible to pass a document object to replace_one method??
+                sourceCollection.save(document)
+                #sourceCollection.replace_one({"_id": docid}, document)
 
             else:
                 print "record " + recordToDelete + " konnte per regex nicht verarbeitet werden"
@@ -808,6 +814,7 @@ class MongoDBHarvestingWrapperFixRecords(MongoDBHarvestingWrapperAdmin):
 
         for document in result:
             recordToDeleteCompressed = document["record"]
+            docid = document["_id"]
             recordToDelete =  zlib.decompress(recordToDeleteCompressed)
 
             spReroDeletedRecordsToSubstitutePattern = self.pReroDeleteRecord.search(recordToDelete)
@@ -815,7 +822,9 @@ class MongoDBHarvestingWrapperFixRecords(MongoDBHarvestingWrapperAdmin):
                 modifiedRecord= spReroDeletedRecordsToSubstitutePattern.group(1) + "</record>"
                 binarymodifiedRecord = Binary( zlib.compress(modifiedRecord,9))
                 document["record"] = binarymodifiedRecord
-                sourceCollection.save(document,safe=True)
+                #attention: save is deprecated - see comment above
+                sourceCollection.save(document)
+                # sourceCollection.replace_one({"_id": docid}, document)
 
             else:
                 print "record " + recordToDelete + " konnte per regex nicht verarbeitet werden"
