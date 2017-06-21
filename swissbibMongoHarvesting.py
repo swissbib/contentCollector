@@ -906,6 +906,10 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
             self.pDefinedRegex = re.compile(regex,re.UNICODE | re.DOTALL | re.IGNORECASE | re.MULTILINE)
 
 
+    def setdocRecordField(self,docField = None):
+
+        self.docRecordField = docField
+
     def readMatchingRecords(self,outDir=None,fileSize=None,userDatestamp=None):
 
         self.userDateStamp = userDatestamp
@@ -930,7 +934,10 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
 
 
         for document in result:
-            recordCompressed = document["record"]
+            if not self.docRecordField is None:
+                recordCompressed = document[self.docRecordField]
+            else:
+                recordCompressed = document["record"]
             record =  zlib.decompress(recordCompressed)
 
             record1 = ''.join(record.splitlines())
