@@ -388,21 +388,19 @@ class CreateNationalLicencesDeleteMessages(CreateDeletes):
             self.applicationContext.getWriteContext().writeItem(recordStructure)
 
 
-            recordStructureMongo = self._createRecordStructureForMongo(idToDelete)
-
             for taskName, task in self.applicationContext.getConfiguration().getDedicatedTasks().items():
 
                 try:
 
                     if isinstance(task, PersistNLMongo):
                         taskContext = StoreNativeNLRecordContext(appContext=self.applicationContext,
-                                                               rID=idToDelete, jatsRecord=recordStructureMongo, modsRecord=recordStructureMongo,
+                                                               rID=idToDelete, jatsRecord=recordStructure, modsRecord=recordStructure,
                                                                deleted=True)
                         task.processRecord(taskContext)
 
                     if isinstance(task, PersistSpringerNLMongo):
                         taskContext = StoreNativeNLRecordContext(appContext=self.applicationContext,
-                                                               rID=idToDelete, modsRecord=recordStructureMongo,
+                                                               rID=idToDelete, modsRecord=recordStructure,
                                                                deleted=True)
                         task.processRecord(taskContext)
                 except Exception as pythonBaseException:
@@ -413,19 +411,6 @@ class CreateNationalLicencesDeleteMessages(CreateDeletes):
                     continue
 
                     # self._moveFileWithDeletedIds(deletesAbsolutePath, oaiDeletes)
-
-
-    def _createRecordStructureForMongo(self, recordID):
-        # 2016-04-18T07:18:44Z (as example)
-        #we need the datetimestamp for the crafted delete structure because for the majaority of the repositories
-        # (with the exception of Nebis and rero) we want to seperate this datetime-stamp in a single field of the
-        #Mongo Index. And because we configured this for the default case it causes troubles when datetime-stamps
-        #are not part of the crafted deleted structure
-
-        return "<record><header status=\"deleted\"><identifier>" + recordID + \
-                                 "</identifier>" + \
-               "<datestamp>" + self.getCurrentTimeFormated() + "</datestamp>" + \
-               "</header></record>"
 
 
 
