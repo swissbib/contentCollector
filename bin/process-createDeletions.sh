@@ -10,7 +10,7 @@ CONFDIR=${CONTENTENV_HOME}/confdir
 
 
 #DEFAULTREPOS="snl"
-DEFAULTREPOS="snl ecod sersol idsbb"
+DEFAULTREPOS="snl ecod sersol idsbb gruyter cambridge oxford springer"
 
 
 
