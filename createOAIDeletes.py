@@ -14,8 +14,8 @@ from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 from Context import ApplicationContext, HarvestingWriteContext
 from os import listdir
 from os.path import isfile, join, isdir
-from harvestingTasks import PersistRecordMongo
-from Context import StoreNativeRecordContext
+from harvestingTasks import PersistRecordMongo, PersistNLMongo, PersistSpringerNLMongo
+from Context import StoreNativeRecordContext, StoreNativeNLRecordContext
 import re
 
 
@@ -362,6 +362,72 @@ class CreateSummonDeleteMessages(CreateDeletes):
         #possible alternative: look for patterns
         #return False
         return False if linenumber == 0 else True
+
+
+class CreateNationalLicencesDeleteMessages(CreateDeletes):
+    def __init__(self,
+                 applicationContext=None, writeContext=None):
+        CreateDeletes.__init__(self, applicationContext=applicationContext, writeContext=writeContext)
+
+    #for National Licences, the file has a list of id's like this :
+        #cambridge-10.1017/S0021875816001067
+        #cambridge-10.1017/S0021875816001225
+        #cambridge-10.1017/S0021875816001122
+
+    def processDeletes(self):
+
+        for idToDelete in self.createGeneratorForDeleteIds():
+
+            self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
+
+
+
+
+            recordStructure = self.createXMLDeleteStructure(idToDelete)
+
+            self.applicationContext.getWriteContext().writeItem(recordStructure)
+
+
+            recordStructureMongo = self._createRecordStructureForMongo(idToDelete)
+
+            for taskName, task in self.applicationContext.getConfiguration().getDedicatedTasks().items():
+
+                try:
+
+                    if isinstance(task, PersistNLMongo):
+                        taskContext = StoreNativeNLRecordContext(appContext=self.applicationContext,
+                                                               rID=idToDelete, jatsRecord=recordStructureMongo, modsRecord=recordStructureMongo,
+                                                               deleted=True)
+                        task.processRecord(taskContext)
+
+                    if isinstance(task, PersistSpringerNLMongo):
+                        taskContext = StoreNativeNLRecordContext(appContext=self.applicationContext,
+                                                               rID=idToDelete, modsRecord=recordStructureMongo,
+                                                               deleted=True)
+                        task.processRecord(taskContext)
+                except Exception as pythonBaseException:
+
+                    self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],
+                                                                            message=[str(pythonBaseException),
+                                                                                     idToDelete])
+                    continue
+
+                    # self._moveFileWithDeletedIds(deletesAbsolutePath, oaiDeletes)
+
+
+    def _createRecordStructureForMongo(self, recordID):
+        # 2016-04-18T07:18:44Z (as example)
+        #we need the datetimestamp for the crafted delete structure because for the majaority of the repositories
+        # (with the exception of Nebis and rero) we want to seperate this datetime-stamp in a single field of the
+        #Mongo Index. And because we configured this for the default case it causes troubles when datetime-stamps
+        #are not part of the crafted deleted structure
+
+        return "<record><header status=\"deleted\"><identifier>" + recordID + \
+                                 "</identifier>" + \
+               "<datestamp>" + self.getCurrentTimeFormated() + "</datestamp>" + \
+               "</header></record>"
+
+
 
 
 if __name__ == '__main__':
