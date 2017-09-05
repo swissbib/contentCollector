@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
         appContext.setMongoWrapper(mongoWrapper)
 
-        aggregatonFile = "".join([str(appContext.getConfiguration().getPrefixSummaryFile()),'-','{:%Y%m%d%H%M%S}'.format(datetime.now()), "-", 'gruyter.all.xml'])
+        aggregatonFile = "".join([str(appContext.getConfiguration().getPrefixSummaryFile()),'-','{:%Y%m%d%H%M%S}'.format(datetime.now()), "-", 'nl.all.xml'])
         wC = FileWebdavWriteContext(appContext)
         appContext.setWriteContext(wC)
 
