@@ -6,11 +6,10 @@ PROCESS_DIR=${CONTENTENV_HOME}/bin
 RUNDIR=${DATA_BASE_DIR}/rundir
 CONFDIR=${CONTENTENV_HOME}/confdir
 
+#This is the same script as process-createDeletions.sh, but is meant to run on sb-ucoai2 instead of ucoai1
 
 
-
-#DEFAULTREPOS="snl"
-DEFAULTREPOS="snl ecod sersol idsbb"
+DEFAULTREPOS="gruyter cambridge oxford springer"
 
 
 
