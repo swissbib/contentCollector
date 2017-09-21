@@ -374,6 +374,24 @@ class CreateNationalLicencesDeleteMessages(CreateDeletes):
         #cambridge-10.1017/S0021875816001225
         #cambridge-10.1017/S0021875816001122
 
+    def createXMLDeleteStructure(self, recordID):
+        #Da die Nationallizenzen-Artikeldaten in einem mods-tag kommen, ist CBS so eingerichtet, dass Inhalte innerhalb
+        #eines mods-tags (statt record) gelesen werden.
+        #D.h. auch der delete muss in einem mods-tag stehen.
+        currentTime = '{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
+        return '<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.6">' + \
+               '<header status=\"deleted\"><identifier>' + recordID + '</identifier>' + \
+               '<datestamp>' + currentTime + '</datestamp>' + \
+               '</header></mods>'
+
+    def createXMLDeleteStructureJATS(self, recordID):
+        #for Mongo JATS, better store the deleted header in an <article> tag
+        currentTime = '{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
+        return '<article>' + \
+               '<header status=\"deleted\"><identifier>' + recordID + '</identifier>' + \
+               '<datestamp>' + currentTime + '</datestamp>' + \
+               '</header></article>'
+
     def processDeletes(self):
 
         for idToDelete in self.createGeneratorForDeleteIds():
@@ -385,6 +403,9 @@ class CreateNationalLicencesDeleteMessages(CreateDeletes):
 
             recordStructure = self.createXMLDeleteStructure(idToDelete)
 
+            recordStructureJATS = self.createXMLDeleteStructureJATS(idToDelete)
+
+
             self.applicationContext.getWriteContext().writeItem(recordStructure)
 
 
@@ -394,7 +415,7 @@ class CreateNationalLicencesDeleteMessages(CreateDeletes):
 
                     if isinstance(task, PersistNLMongo):
                         taskContext = StoreNativeNLRecordContext(appContext=self.applicationContext,
-                                                               rID=idToDelete, jatsRecord=recordStructure, modsRecord=recordStructure,
+                                                               rID=idToDelete, jatsRecord=recordStructureJATS, modsRecord=recordStructure,
                                                                deleted=True)
                         task.processRecord(taskContext)
 
