@@ -2204,6 +2204,356 @@ class PersistSpringerNLMongo(PersistNLMongo):
             40777 : 1940, #Rendiconti del Circolo Matematico Palermo 1884-1940
         }
 
+        # for some journals, the national licence doesn't start with volume 1 altough Springer delivered all the metadata
+        self.journalsWithASpecialStartYear = {
+            12630: 2005,  # Canadian Journal of Anaesthesia
+            13414: 2005,  # Perception & Psychophysics
+            13428: 2005,  # Behavior Research Methods & Instrumentation
+            12662: 2005,  # Sportwissenschaft
+            13420: 2005,  # Animal Learning & Behavior
+            13421: 2005,  # Memory & Cognition
+            11837: 2005,  # JOM
+            12297: 2005,  # Zeitschrift für die gesamte Versicherungswissenschaft
+            11401: 2005,  # Chinese Annals of Mathematics, Series B
+            13138: 2005,  # Journal für Mathematik-Didaktik
+            12140: 2005,  # East Asia
+            10409: 2005,  # Acta Mechanica Sinica
+            12550: 2005,  # Mycotoxin Research
+            287: 2005,  # Informatik-Spektrum
+            482: 2005,  # Der Schmerz
+            10278: 2005,  # Journal of Digital Imaging
+            11524: 2005,  # Journal of Urban Health
+            13361: 2005,  # Journal of the American Society for Mass Spectrometry
+            717: 2005,  # Spektrum der Augenheilkunde
+            591: 2005,  # Mathematische Semesterberichte
+            10043: 2005,  # Optical Review
+            101: 2005,  # Der Anaesthesist
+            105: 2005,  # Der Hautarzt
+            13423: 2005,  # Psychonomic Bulletin & Review
+            292: 2005,  # Der Pathologe
+            10291: 2005,  # GPS Solutions
+            10699: 2005,  # Foundations of Science
+            12160: 2005,  # Annals of Behavioral Medicine
+            450: 2005,  # Informatik Forschung und Entwicklung
+            104: 2005,  # Der Chirurg
+            106: 2005,  # HNO
+            112: 2005,  # Monatsschrift Kinderheilkunde
+            113: 2005,  # Der Unfallchirurg
+            11325: 2005,  # Sleep and Breathing
+            11448: 2005,  # Journal of Experimental and Theoretical Physics Letters
+            115: 2005,  # Der Nervenarzt
+            117: 2005,  # Der Radiologe
+            120: 2005,  # Der Urologe
+            12199: 2005,  # Environmental Health and Preventive Medicine
+            12549: 2005,  # Senckenbergiana lethaea
+            129: 2005,  # Der Gynäkologe
+            132: 2005,  # Der Orthopäde
+            278: 2005,  # Psychotherapeut
+            347: 2005,  # Der Ophthalmologe
+            761: 2005,  # Der Onkologe
+            767: 2005,  # Grundwasser
+            780: 2005,  # Finance and Stochastics
+            10006: 2005,  # Mund-, Kiefer- und Gesichtschirurgie
+            10008: 2005,  # Journal of Solid State Electrochemistry
+            10009: 2005,  # International Journal on Software Tools for Technology Transfer
+            10014: 2005,  # Brain Tumor Pathology
+            10015: 2005,  # Artificial Life and Robotics
+            10029: 2005,  # Hernia
+            10048: 2005,  # Neurogenetics
+            10049: 2005,  # Notfall + Rettungsmedizin
+            10157: 2005,  # Clinical and Experimental Nephrology
+            10266: 2005,  # Odontology
+            103: 2005,  # Bundesgesundheitsblatt - Gesundheitsforschung - Gesundheitsschutz
+            10456: 2005,  # Angiogenesis
+            10461: 2005,  # AIDS and Behavior
+            10492: 2005,  # Applications of Mathematics
+            10563: 2005,  # Catalysis Surveys from Asia
+            10587: 2005,  # Czechoslovak Mathematical Journal
+            10596: 2005,  # Computational Geosciences
+            10618: 2005,  # Data Mining and Knowledge Discovery
+            10707: 2005,  # GeoInformatica
+            10761: 2005,  # International Journal of Historical Archaeology
+            108: 2005,  # Der Internist
+            10828: 2005,  # The Journal of Comparative Germanic Linguistics
+            10832: 2005,  # Journal of Electroceramics
+            10840: 2005,  # Journal of Interventional Cardiac Electrophysiology
+            10841: 2005,  # Journal of Insect Conservation
+            10878: 2005,  # Journal of Combinatorial Optimization
+            10892: 2005,  # The Journal of Ethics
+            10950: 2005,  # Journal of Seismology
+            10995: 2005,  # Maternal and Child Health Journal
+            10997: 2005,  # Journal of Management & Governance
+            11043: 2005,  # Mechanics of Time-Dependent Materials
+            11044: 2005,  # Multibody System Dynamics
+            11099: 2005,  # Photosynthetica
+            11117: 2005,  # Positivity
+            11139: 2005,  # The Ramanujan Journal
+            11252: 2005,  # Urban Ecosystems
+            11407: 2005,  # International Journal of Hindu Studies
+            11425: 2005,  # Science in China Series A: Mathematics
+            11430: 2005,  # Science in China Series D: Earth Sciences
+            11447: 2005,  # Journal of Experimental and Theoretical Physics
+            11451: 2005,  # Physics of the Solid State
+            11453: 2005,  # Semiconductors
+            11454: 2005,  # Technical Physics
+            11455: 2005,  # Technical Physics Letters
+            11605: 2005,  # Journal of Gastrointestinal Surgery
+            11738: 2005,  # Acta Physiologiae Plantarum
+            11818: 2005,  # Somnologie - Schlafforschung und Schlafmedizin
+            11858: 2005,  # ZDM
+            12374: 2005,  # Journal of Plant Biology
+            194: 2005,  # Rechtsmedizin
+            26: 2005,  # Annals of Combinatorics
+            337: 2005,  # Manuelle Medizin
+            392: 2005,  # Zeitschrift für Kardiologie
+            393: 2005,  # Zeitschrift für Rheumatologie
+            399: 2005,  # Herzschrittmachertherapie und Elektrophysiologie
+            500: 2005,  # Soft Computing
+            502: 2005,  # e&i Elektrotechnik und Informationstechnik
+            53: 2005,  # coloproctology
+            548: 2005,  # STANDORT
+            59: 2005,  # Herz
+            6: 2005,  # Advances in Applied Clifford Algebras
+            62: 2005,  # Clinical Neuroradiology
+            63: 2005,  # Medizinische Klinik
+            66: 2005,  # Strahlentherapie und Onkologie
+            772: 2005,  # Gefässchirurgie
+            779: 2005,  # Personal and Ubiquitous Computing
+            784: 2005,  # Clinical Oral Investigations
+            791: 2005,  # Computing and Visualization in Science
+            792: 2005,  # Extremophiles
+            799: 2005,  # International Journal on Digital Libraries
+            10018: 2005,  # Environmental Economics and Policy Studies
+            10021: 2005,  # Ecosystems
+            10032: 2005,  # International Journal on Document Analysis and Recognition
+            10035: 2005,  # Granular Matter
+            10039: 2005,  # Trauma und Berufskrankheit
+            10044: 2005,  # Pattern Analysis and Applications
+            10047: 2005,  # Journal of Artificial Organs
+            10050: 2005,  # The European Physical Journal A - Hadrons and Nuclei
+            10051: 2005,  # The European Physical Journal B - Condensed Matter and Complex Systems
+            10053: 2005,  # The European Physical Journal D - Atomic, Molecular, Optical and Plasma Physics
+            10071: 2005,  # Animal Cognition
+            10086: 2005,  # Journal of Wood Science
+            10098: 2005,  # Clean Technologies and Environmental Policy
+            10120: 2005,  # Gastric Cancer
+            10458: 2005,  # Autonomous Agents and Multi-Agent Systems
+            10468: 2005,  # Algebras and Representation Theory
+            10544: 2005,  # Biomedical Microdevices
+            10567: 2005,  # Clinical Child and Family Psychology Review
+            10586: 2005,  # Cluster Computing
+            10677: 2005,  # Ethical Theory and Moral Practice
+            10683: 2005,  # Experimental Economics
+            10687: 2005,  # Extremes
+            10729: 2005,  # Health Care Management Science
+            10857: 2005,  # Journal of Mathematics Teacher Education
+            10984: 2005,  # Learning Environments Research
+            11019: 2005,  # Medicine, Health Care and Philosophy
+            11102: 2005,  # Pituitary
+            11203: 2005,  # Statistical Inference for Stochastic Processes
+            11280: 2005,  # World Wide Web
+            11743: 2005,  # Journal of Surfactants and Detergents
+            11748: 2005,  # The Japanese Journal of Thoracic and Cardiovascular Surgery
+            12650: 2005,  # Journal of Visualization
+            13147: 2005,  # Raumforschung und Raumordnung
+            142: 2005,  # Arthroskopie
+            350: 2005,  # Medizinrecht
+            391: 2005,  # Zeitschrift für Gerontologie und Geriatrie
+            40802: 2005,  # Netherlands International Law Review
+            451: 2005,  # Forum der Psychoanalyse
+            481: 2005,  # Ethik in der Medizin
+            737: 2005,  # Archives of Women's Mental Health
+            10109: 2005,  # Journal of Geographical Systems
+            10113: 2005,  # Regional Environmental Change
+            10115: 2005,  # Knowledge and Information Systems
+            10126: 2005,  # Marine Biotechnology
+            10151: 2005,  # Techniques in Coloproctology
+            10163: 2005,  # Journal of Material Cycles and Waste Management
+            10211: 2005,  # acta ethologica
+            10530: 2005,  # Biological Invasions
+            10676: 2005,  # Ethics and Information Technology
+            10698: 2005,  # Foundations of Chemistry
+            10791: 2005,  # Information Retrieval
+            10796: 2005,  # Information Systems Frontiers
+            10818: 2005,  # Journal of Bioeconomics
+            10903: 2005,  # Journal of Immigrant and Minority Health
+            11009: 2005,  # Methodology and Computing in Applied Probability
+            11051: 2005,  # Journal of Nanoparticle Research
+            11066: 2005,  # NETNOMICS: Economic Research and Electronic Networking
+            11107: 2005,  # Photonic Network Communications
+            11119: 2005,  # Precision Agriculture
+            11908: 2005,  # Current Infectious Disease Reports
+            11940: 2005,  # Current Treatment Options in Neurology
+            12142: 2005,  # Human Rights Review
+            12248: 2005,  # The AAPS Journal
+            16: 2005,  # Physics in Perspective
+            180: 2005,  # Computational Statistics
+            21: 2005,  # Journal of Mathematical Fluid Mechanics
+            4: 2005,  # Nexus Network Journal
+            10101: 2005,  # Economics of Governance
+            10142: 2005,  # Functional & Integrative Genomics
+            10162: 2005,  # Journal of the Association for Research in Otolaryngology
+            10189: 2005,  # The European Physical Journal E
+            10198: 2005,  # The European Journal of Health Economics
+            10201: 2005,  # Limnology
+            10327: 2005,  # Journal of General Plant Pathology
+            10522: 2005,  # Biogerontology
+            10541: 2005,  # Biochemistry (Moscow)
+            10561: 2005,  # Cell and Tissue Banking
+            10592: 2005,  # Conservation Genetics
+            10595: 2005,  # Colloid Journal
+            10631: 2005,  # Doklady Chemistry
+            10710: 2005,  # Genetic Programming and Evolvable Machines
+            10720: 2005,  # Glass Physics and Chemistry
+            10733: 2005,  # High Energy Chemistry
+            10740: 2005,  # High Temperature
+            10742: 2005,  # Health Services and Outcomes Research Methodology
+            10747: 2005,  # Human Physiology
+            10786: 2005,  # Instruments and Experimental Techniques
+            10789: 2005,  # Inorganic Materials
+            10799: 2005,  # Information Technology and Management
+            10809: 2005,  # Journal of Analytical Chemistry
+            10833: 2005,  # Journal of Educational Change
+            10902: 2005,  # Journal of Happiness Studies
+            10969: 2005,  # Journal of Structural and Functional Genomics
+            10975: 2005,  # Kinetics and Catalysis
+            11021: 2005,  # Microbiology
+            11081: 2005,  # Optimization and Engineering
+            11121: 2005,  # Prevention Science
+            11154: 2005,  # Reviews in Endocrine and Metabolic Disorders
+            11175: 2005,  # Russian Journal of Electrochemistry
+            11181: 2005,  # Russian Journal of Nondestructive Testing
+            11220: 2005,  # Subsurface Sensing Technologies and Applications
+            11236: 2005,  # Theoretical Foundations of Chemical Engineering
+            11268: 2005,  # Water Resources
+            11299: 2005,  # Mind & Society
+            11441: 2005,  # Acoustical Physics
+            11443: 2005,  # Astronomy Letters
+            11444: 2005,  # Astronomy Reports
+            11445: 2005,  # Crystallography Reports
+            11446: 2005,  # Doklady Physics
+            11449: 2005,  # Optics and Spectroscopy
+            11450: 2005,  # Physics of Atomic Nuclei
+            11452: 2005,  # Plasma Physics Reports
+            11577: 2005,  # KZfSS Kölner Zeitschrift für Soziologie und Sozialpsychologie
+            11582: 2005,  # Journal of Zhejiang University-SCIENCE A
+            11609: 2005,  # Berliner Journal für Soziologie
+            11612: 2005,  # Gruppe. Interaktion. Organisation. Zeitschrift für Angewandte Organisationspsychologie (GIO)
+            11613: 2005,  # Organisationsberatung, Supervision, Coaching
+            11616: 2005,  # Publizistik
+            11618: 2005,  # Zeitschrift für Erziehungswissenschaft
+            11864: 2005,  # Current Treatment Options in Oncology
+            12027: 2005,  # ERA Forum
+            12064: 2005,  # Theory in Biosciences
+            12094: 2005,  # Clinical and Translational Oncology
+            12134: 2005,
+        # Journal of International Migration and Integration / Revue de l'integration et de la migration internationale
+            12176: 2005,  # Controlling & Management
+            12221: 2005,  # Fibers and Polymers
+            12249: 2005,  # AAPS PharmSciTech
+            12325: 2005,  # Advances in Therapy
+            12596: 2005,  # Journal of Optics
+            13105: 2005,  # Journal of Physiology and Biochemistry
+            23: 2005,  # Annales Henri Poincaré
+            40804: 2005,  # European Business Organization Law Review
+            10207: 2005,  # International Journal of Information Security
+            10208: 2005,  # Foundations of Computational Mathematics
+            10209: 2005,  # Universal Access in the Information Society
+            10238: 2005,  # Clinical and Experimental Medicine
+            10396: 2005,  # Journal of Medical Ultrasonics
+            10502: 2005,  # Archival Science
+            10652: 2005,  # Environmental Fluid Mechanics
+            10660: 2005,  # Electronic Commerce Research
+            10689: 2005,  # Familial Cancer
+            10754: 2005,  # International Journal of Health Care Finance and Economics
+            10775: 2005,  # International Journal for Educational and Vocational Guidance
+            11067: 2005,  # Networks and Spatial Economics
+            11115: 2005,  # Public Organization Review
+            11137: 2005,  # Radiochemistry
+            11167: 2005,  # Russian Journal of Applied Chemistry
+            11176: 2005,  # Russian Journal of General Chemistry
+            11178: 2005,  # Russian Journal of Organic Chemistry
+            11368: 2005,  # Journal of Soils and Sediments
+            11408: 2005,  # Financial Markets and Portfolio Management
+            11614: 2005,  # Österreichische Zeitschrift für Soziologie
+            11712: 2005,  # Dao
+            11892: 2005,  # Current Diabetes Reports
+            11910: 2005,  # Current Neurology and Neuroscience Reports
+            12012: 2005,  # Cardiovascular Toxicology
+            13246: 2005,  # Australasian Physics & Engineering Sciences in Medicine
+            13253: 2005,  # Journal of Agricultural, Biological, and Environmental Statistics
+            13364: 2005,  # Acta Theriologica
+            13365: 2005,  # Journal of NeuroVirology
+            13415: 2005,  # Cognitive, Affective, & Behavioral Neuroscience
+            28: 2005,  # Journal of Evolution Equations
+            10237: 2005,  # Biomechanics and Modeling in Mechanobiology
+            10258: 2005,  # Portuguese Economic Journal
+            10270: 2005,  # Software & Systems Modeling
+            10304: 2005,  # Gynäkologische Endokrinologie
+            10343: 2005,  # Gesunde Pflanzen
+            10671: 2005,  # Educational Research for Policy and Practice
+            10700: 2005,  # Fuzzy Optimization and Decision Making
+            10825: 2005,  # Journal of Computational Electronics
+            10993: 2005,  # Language Policy
+            11047: 2005,  # Natural Computing
+            11097: 2005,  # Phenomenology and the Cognitive Sciences
+            11101: 2005,  # Phytochemistry Reviews
+            11128: 2005,  # Quantum Information Processing
+            11157: 2005,  # Reviews in Environmental Science and Bio/Technology
+            11557: 2005,  # Mycological Progress
+            12017: 2005,  # NeuroMolecular Medicine
+            12136: 2005,  # Acta Analytica
+            12311: 2005,  # The Cerebellum
+            12522: 2005,  # Reproductive Medicine and Biology
+            12565: 2005,  # Anatomical Science International
+            13577: 2005,  # Human Cell
+            40194: 2005,  # Welding in the World
+            10257: 2005,  # Information Systems and e-Business Management
+            10287: 2005,  # Computational Management Science
+            10288: 2005,  # 4OR
+            10308: 2005,  # Asia Europe Journal
+            10309: 2005,  # Zeitschrift für Epileptologie
+            10311: 2005,  # Environmental Chemistry Letters
+            10333: 2005,  # Paddy and Water Environment
+            10354: 2005,  # Wiener Medizinische Wochenschrift
+            10388: 2005,  # Esophagus
+            10518: 2005,  # Bulletin of Earthquake Engineering
+            10723: 2005,  # Journal of Grid Computing
+            10763: 2005,  # International Journal of Science and Mathematics Education
+            10805: 2005,  # Journal of Academic Ethics
+            10843: 2005,  # Journal of International Entrepreneurship
+            10888: 2005,  # The Journal of Economic Inequality
+            10951: 2005,  # Journal of Scheduling
+            11129: 2005,  # Quantitative Marketing and Economics
+            11150: 2005,  # Review of Economics of the Household
+            11518: 2005,  # Journal of Systems Science and Systems Engineering
+            12021: 2005,  # Neuroinformatics
+            187: 2005,  # Zeitschrift für Planung & Unternehmenssteuerung
+            508: 2005,  # Wiener klinische Wochenschrift
+            10182: 2005,  # AStA Advances in Statistical Analysis
+            10339: 2005,  # Cognitive Processing
+            10341: 2005,  # Erwerbs-Obstbau
+            10346: 2005,  # Landslides
+            10357: 2005,  # Natur und Recht
+            10368: 2005,  # International Economics and Economic Policy
+            10384: 2005,  # Japanese Journal of Ophthalmology
+            10393: 2005,  # EcoHealth
+            10397: 2005,  # Gynecological Surgery
+            10404: 2005,  # Microfluidics and Nanofluidics
+            10405: 2005,  # Der Pneumologe
+            10433: 2005,  # European Journal of Ageing
+            10999: 2005,  # International Journal of Mechanics and Materials in Design
+            11302: 2005,  # Purinergic Signalling
+            11332: 2005,  # Sport Sciences for Health
+            11633: 2005,  # International Journal of Automation and Computing
+            11904: 2005,  # Current HIV/AIDS Reports
+            12028: 2005,  # Neurocritical Care
+            12054: 2005,  # Sozial Extra
+            15: 2005,  # Swiss Journal of Geosciences
+            44: 2005,  # Medicinal Chemistry Research
+            9: 2005,  # Mediterranean Journal of Mathematics
+        }
+
         PersistRecordMongo.__init__(self)
 
     def  processRecord(self, taskContext=None):
@@ -2245,6 +2595,11 @@ class PersistSpringerNLMongo(PersistNLMongo):
             if journalId in self.nationalLicencesJournals:
                 if journalId in self.journalsWithASpecialEndYear:
                     if year <= self.journalsWithASpecialEndYear[journalId]:
+                        includedInNationalLicences="yes"
+                    else:
+                        includedInNationalLicences="no"
+                elif journalId in self.journalsWithASpecialStartYear:
+                    if year >= self.journalsWithASpecialStartYear[journalId]:
                         includedInNationalLicences="yes"
                     else:
                         includedInNationalLicences="no"
