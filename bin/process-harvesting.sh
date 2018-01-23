@@ -7,7 +7,7 @@ RUNDIR=${DATA_BASE_DIR}/rundir
 CONFDIR=${CONTENTENV_HOME}/confdir
 
 
-DEFAULTREPOS="boris libib serval ecod snl sbt idsbb idslu idssg1 POSTERS zora retroseals abn bgr sgbn alex vaud_lib vaud_school hemu edoc"
+DEFAULTREPOS="boris libib serval ecod snl sbt idsbb idslu idssg1 POSTERS zora retroseals abn bgr sgbn alex vaud_lib vaud_school hemu edoc kbtg"
 
 
 if [ -n "$1" ]; then
