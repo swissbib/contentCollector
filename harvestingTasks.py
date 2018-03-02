@@ -371,13 +371,13 @@ class PersistNLMongo(PersistRecordMongo):
 
             year=0
             if len(resultPYear) > 0 :
-                year=resultPYear[0].text
+                year=int(resultPYear[0].text)
             elif len(resultEYear) > 0:
-                year=resultEYear[0].text
+                year=int(resultEYear[0].text)
             elif len(resultYear) > 0:
-                year=resultYear[0].text
+                year=int(resultYear[0].text)
             elif len(resultCopyrightYear) > 0:
-                year=resultCopyrightYear[0].text
+                year=int(resultCopyrightYear[0].text)
 
             if not mongoRecord:
                 #record isn't in database so far
