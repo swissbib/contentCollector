@@ -2202,6 +2202,21 @@ class PersistSpringerNLMongo(PersistNLMongo):
             40775 : 1966, #Irish Journal Medical Science 1926-1967
             40776 : 1970, #Irish Journal Medical Science 1968-1970
             40777 : 1940, #Rendiconti del Circolo Matematico Palermo 1884-1940
+            10310 : 2012, #Journal of Forest Research
+            10397 : 2012, #Gynecological Surgery
+            10969 : 2012, #Journal of Structural and Functional Genomics
+            10972 : 2012, #Journal of Science Teacher Education
+            11511 : 2012, #Acta Mathematica
+            11512 : 2012, #Arkiv för Matematik
+            11743 : 2012, #Journal of Surfactants and Detergents
+            11745 : 2012, #Lipids
+            11746 : 2012, #Journal of the American Oil Chemists' Society
+            11999 : 2012, #Clinical Orthopaedics and Related Research®
+            12160 : 2012, #Annals of Behavioral Medicine
+            12199 : 2012, #Environmental Health and Preventive Medicine
+            12522 : 2012, #Reproductive Medicine and Biology
+            13295 : 2012, #e-Neuroforum
+            13594 : 2012, #Dairy Science & Technology
         }
 
         # for some journals, the national licence doesn't start with volume 1 altough Springer delivered all the metadata
