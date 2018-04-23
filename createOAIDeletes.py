@@ -14,6 +14,7 @@ from swissbibMongoHarvesting import MongoDBHarvestingWrapper
 from Context import ApplicationContext, HarvestingWriteContext
 from os import listdir
 from os.path import isfile, join, isdir
+
 from harvestingTasks import PersistRecordMongo, PersistNLMongo, PersistSpringerNLMongo
 from Context import StoreNativeRecordContext, StoreNativeNLRecordContext
 import re
@@ -51,7 +52,7 @@ class CreateDeletes:
         deleteDir = self.applicationContext.getConfiguration().getOaiDeleteDir()
 
         generatorActivated = False
-        for deleteMessageFile in [f for f in listdir(deleteDir) if isfile(join(deleteDir, f))]:
+        for deleteMessageFile in [f for f in listdir(deleteDir) if isfile(join(deleteDir,f))]:
 
             if (deleteMessageFile.startswith(self.applicationContext.getConfiguration().getPrefixSummaryFile() + "-")):
 
@@ -94,6 +95,43 @@ class CreateDeletes:
                                  "</identifier>" + \
                "<datestamp>" + currentTime + "</datestamp>" + \
                "</header></record>"
+
+    def processDeletesIDS(self):
+
+        for idToDelete in self.createGeneratorForDeleteIds():
+            self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
+            splitted = idToDelete.split('###')
+            if not len(splitted) == 2:
+                self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a record"],
+                                                                        message=["iterator didn't provide the expected two IDs",
+                                                                                 " ".join(splitted)])
+                continue
+
+
+            recordStructure = self.createXMLDeleteStructure(splitted[1])
+            self.applicationContext.getWriteContext().writeItem(recordStructure)
+
+
+            #recordStructureMongo = self._createRecordStructureForMongo(splitted[0])
+
+            for taskName, task in self.applicationContext.getConfiguration().getDedicatedTasks().items():
+
+                try:
+
+                    if isinstance(task, PersistRecordMongo):
+                        taskContext = StoreNativeRecordContext(appContext=self.applicationContext,
+                                                               rID=splitted[0], singleRecord=recordStructure,
+                                                               deleted=True)
+                        task.processRecord(taskContext)
+                except Exception as pythonBaseException:
+
+                    self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],
+                                                                            message=[str(pythonBaseException),
+                                                                                     idToDelete])
+                    continue
+
+
+
 
     def processDeletes(self):
 
@@ -303,40 +341,93 @@ class CreateIDSBBDeleteMessages(CreateDeletes):
 
 
     def processDeletes(self):
-
-        for idToDelete in self.createGeneratorForDeleteIds():
-            self.applicationContext.getResultCollector().addRecordsToCBSNoSkip(1)
-            splitted = idToDelete.split('###')
-            if not len(splitted) == 2:
-                self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a record"],
-                                                                        message=["iterator didn't provide the expected two IDs",
-                                                                                 " ".join(splitted)])
-                continue
+        CreateDeletes.processDeletesIDS(self)
 
 
-            recordStructure = self.createXMLDeleteStructure(splitted[1])
-            self.applicationContext.getWriteContext().writeItem(recordStructure)
 
 
-            #recordStructureMongo = self._createRecordStructureForMongo(splitted[0])
-
-            for taskName, task in self.applicationContext.getConfiguration().getDedicatedTasks().items():
-
-                try:
-
-                    if isinstance(task, PersistRecordMongo):
-                        taskContext = StoreNativeRecordContext(appContext=self.applicationContext,
-                                                               rID=splitted[0], singleRecord=recordStructure,
-                                                               deleted=True)
-                        task.processRecord(taskContext)
-                except Exception as pythonBaseException:
-
-                    self.applicationContext.getWriteContext().writeErrorLog(header=["error while processing a task"],
-                                                                            message=[str(pythonBaseException),
-                                                                                     idToDelete])
-                    continue
+class CreateIDSBGRDeleteMessages(CreateDeletes):
+    def __init__(self,
+                 applicationContext=None, writeContext=None):
+        CreateDeletes.__init__(self, applicationContext=applicationContext, writeContext=writeContext)
 
 
+    def getRecordId(self,idWithoutNetwork):
+        #(BGR)oai:aleph.gr.ch:BGR01-000150008
+        return "".join("oai:aleph.gr.ch:BGR01-" + idWithoutNetwork)
+
+
+    def createXMLDeleteStructure(self, recordID):
+        currentTime = '{:%Y-%m-%dT%H:%M:%SZ}'.format(datetime.now())
+        return "<record><header status=\"deleted\"><identifier>" + "".join(["oai:aleph.gr.ch:BGR01-",recordID]) + \
+                                 "</identifier>" + \
+               "<datestamp>" + currentTime + "</datestamp>" + \
+               "<setSpec>SWISSBIB-FULL-OAI</setSpec>" + \
+               "</header></record>"
+
+
+    def getIdFromStructure(self, structure):
+
+        idOnly = structure.rstrip('\n\r ')
+        return '(BGR)oai:aleph.gr.ch:BGR01-' + idOnly + '###' + idOnly
+
+
+    def processDeletes(self):
+        CreateDeletes.processDeletesIDS(self)
+
+
+class CreateIDSNEBISDeleteMessages(CreateDeletes):
+    def __init__(self,
+                 applicationContext=None, writeContext=None):
+        CreateDeletes.__init__(self, applicationContext=applicationContext, writeContext=writeContext)
+
+
+    def getRecordId(self,idWithoutNetwork):
+        return "".join("aleph-publish-" + idWithoutNetwork)
+
+
+    def createXMLDeleteStructure(self, recordID):
+        #created message during regular import
+        #<record><header status="deleted"><identifier>aleph-publish:005026018</identifier></header></record>
+        return "<record><header status=\"deleted\"><identifier>" + "".join(["aleph-publish:",recordID]) + \
+                                 "</identifier>" + \
+               "</header></record>"
+
+
+    def getIdFromStructure(self, structure):
+
+        idOnly = structure.rstrip('\n\r ')
+        return '(NEBIS)aleph-publish:' + idOnly + '###' + idOnly
+
+
+    def processDeletes(self):
+        CreateDeletes.processDeletesIDS(self)
+
+class CreateReroDeleteMessages(CreateDeletes):
+    def __init__(self,
+                 applicationContext=None, writeContext=None):
+        CreateDeletes.__init__(self, applicationContext=applicationContext, writeContext=writeContext)
+
+
+    def getRecordId(self,idWithoutNetwork):
+        #we use only the network prefix plus ID number for rero - astonishing....
+        return  idWithoutNetwork
+
+
+    def createXMLDeleteStructure(self, recordID):
+        #created message during regular import
+        #<record><header status="deleted"><identifier>aleph-publish:005026018</identifier></header></record>
+        return "<record><header status=\"deleted\"><identifier>TOREPLACE</identifier></header></record>".replace("TOREPLACE", recordID)
+
+
+    def getIdFromStructure(self, structure):
+
+        idOnly = structure.rstrip('\n\r ')
+        return '(RERO)' + idOnly + '###' + idOnly
+
+
+    def processDeletes(self):
+        CreateDeletes.processDeletesIDS(self)
 
 
 
