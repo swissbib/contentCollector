@@ -37,7 +37,7 @@ class NLFileProvider(SingleImportFileProvider):
         for root, dirs, files in os.walk(processedDataDir):
             for file in files:
                 if file.lower().endswith('.xml') or file.lower().endswith('.xml.meta'):
-                    yield self.getFileContent(root, file)
+                    yield [self.getFileContent(root, file), root+file]
 
 
 
@@ -65,11 +65,15 @@ class NationalLicencesProcessor(FileProcessor):
 
         return id
 
-    def _getModsStructure(self, sourceRecord):
+    def _getModsStructure(self, sourceRecord, filename):
 
         f = StringIO.StringIO(sourceRecord)
         xml = etree.parse(f)
-        mods = self.context.getModsTransformation()(xml)
+
+        plain_string_filename = etree.XSLT.strparam(filename)
+
+        #filename is passed as a stylesheet parameter
+        mods = self.context.getModsTransformation()(xml, filename=plain_string_filename)
         return etree.tostring(mods)
 
 
@@ -104,11 +108,13 @@ class NationalLicencesProcessor(FileProcessor):
 
         try:
 
-            for contentSingleRecord in nlFileProvider.createGenerator():
+            for recordAndFilename in nlFileProvider.createGenerator():
+                contentSingleRecord = recordAndFilename[0]
+                filename = recordAndFilename[1]
 
                 try:
 
-                    mods = self._getModsStructure(contentSingleRecord)
+                    mods = self._getModsStructure(contentSingleRecord, filename)
                     recordId = self._getRecordIdFromMods(mods)
                     #print contentSingleRecord
                     for taskName, task in self.context.getConfiguration().getDedicatedTasks().items():
