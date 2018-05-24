@@ -37,7 +37,7 @@ class NLFileProvider(SingleImportFileProvider):
         for root, dirs, files in os.walk(processedDataDir):
             for file in files:
                 if file.lower().endswith('.xml') or file.lower().endswith('.xml.meta'):
-                    yield [self.getFileContent(root, file), root+file]
+                    yield [self.getFileContent(root, file), root+'/'+file]
 
 
 
