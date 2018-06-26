@@ -48,7 +48,8 @@ class HarvestingConfigs():
                           'archiveNotSent','blocked',
                           'eMailNotifification','mailServer',
                           'addRecordTimeStamp',
-                          'deleteMessagesProcessorType']
+                          'deleteMessagesProcessorType',
+                          'verifyCertificate']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -104,6 +105,26 @@ class HarvestingConfigs():
     def setMailServer(self,value):
         self._setLXMLTreeNodeValue("mailServer", value)
         self.tagsDict['mailServer'] = value
+
+    def getVerifyCertificate(self):
+        if not self.tagsDict['verifyCertificate'] is None:
+            #intention: verification of certificate always True except fix defined values
+            return  not (self.tagsDict['verifyCertificate']).strip().lower() in ['False','false','f','n','0','']
+        else:
+            return True
+
+
+    def setVerifyCertificate(self,value):
+        if value.strip().lower() in ['False','false', 'f', 'n', '0']:
+            value = False
+        else:
+            value = True
+
+        self._setLXMLTreeNodeValue("verifyCertificate", value)
+        self.tagsDict['verifyCertificate'] = value
+
+
+
 
     def getEMailNotifification(self):
         return self.tagsDict['eMailNotifification']

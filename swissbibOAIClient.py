@@ -95,17 +95,19 @@ def retrieveFromUrlWaitingRequests(wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT,
     for i in range(wait_max):
         try:
 
+            certificateVerification = context.getConfiguration().getVerifyCertificate()
+
             if not context is None and context.getConfiguration().getProxy() is not None:
                 proxies = {
                   "http": context.getConfiguration().getProxy(),
                   "https": context.getConfiguration().getProxy(),
                 }
-                result  = requests.get(baseURL,params=params,proxies=proxies)
+                result  = requests.get(baseURL,params=params,proxies=proxies, verify=certificateVerification)
             else:
                 #siehe auch hier
                 #http://docs.python-requests.org/en/latest/user/advanced/
                 #ich brauche noch die Unterstützung von Proxies
-                result  = requests.get(baseURL,params=params)
+                result  = requests.get(baseURL,params=params,verify=certificateVerification)
                 #result.encoding = 'ISO-8859-1'
 
 
@@ -208,6 +210,8 @@ class SwissbibOAIClient(Client, SwissbibPreImportProcessor):
         #    self._base_url, data=urlencode(kw))
         #return retrieveFromUrlWaiting(request,config=self.context.getConfiguration())
         #we switch to the requests module
+
+
         return retrieveFromUrlWaitingRequests(baseURL=self._base_url,params=paramDic,context=self.context)
 
 
