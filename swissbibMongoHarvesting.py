@@ -973,3 +973,6 @@ class MongoDBHarvestingWrapperSearchDefinedGeneric(MongoDBHarvestingWrapperAdmin
             self.writeFooter(fileToWrite)
             fileToWrite.close()
 
+        os.system("gzip " + outDir + os.sep + "*")
+
+
