@@ -27,6 +27,8 @@ import smtplib
 
 
 
+
+
 __author__ = 'swissbib'
 
 
@@ -852,6 +854,42 @@ class PushFileProvider(SingleImportFileProvider):
                     raise Exception("push generator pattern didn't match the file in process")
 
 
+
+class BischFileProvider(SingleImportFileProvider):
+
+    def __init__(self,context):
+        SingleImportFileProvider.__init__(self,context)
+        self.pCompleteBischRecord =  re.compile('<record id=.*?>.*?</record>',re.UNICODE | re.DOTALL)
+
+
+
+    def createGenerator(self):
+        if self.fileName is None or len(self.fileName) == 0:
+            #provide no content
+            yield SingleImportFileProvider.createGenerator(self)
+        else:
+
+            for singleFile in glob.glob(self.context.getConfiguration().getIncomingDir() + os.sep + '*.xml'):
+
+                tfile = open( singleFile,"r")
+                contentSingleFile = "".join(tfile.readlines())
+                tfile.close()
+                iterator = self.pCompleteBischRecord.finditer(contentSingleFile)
+
+                numberOfRecords = 0
+
+                for matchRecord in iterator:
+                    contentSingleRecord = matchRecord.group()
+                    numberOfRecords += 1
+
+                    yield contentSingleRecord
+
+                if numberOfRecords == 0:
+                    raise Exception("bisch record generator didn't match any record")
+
+
+
+
 class WebDavFileProvider(SingleImportFileProvider):
 
     def __init__(self,context,inputFileName):
@@ -1020,6 +1058,93 @@ class SummonRecordProvider(PushFileProvider):
 
         if numberOfRecords == 0:
             raise Exception("Summon Record provider doesn't match any record")
+
+
+
+
+class FileProcessorBisch(FilePushProcessor):
+
+    def initialize(self):
+        FilePushProcessor.initialize(self)
+
+        #todo: I don't know why subroutine doesn't work in this case
+        #srargs = [ 'rm ','-r' ,  "".join([ self.context.getConfiguration().getIncomingDir() , os.sep, '*.xml'])]
+        #p = SwissbibUtilities.subroutine(srargs)
+        os.system("rm " + "".join([ self.context.getConfiguration().getIncomingDir() , os.sep, '*.',
+                                    self.context.getConfiguration().getFileNameSuffix()]))
+
+        #todo query für übertragen der IDs in neue collection
+        #db.bischid.save(db.sourceBISCH.find({},{_id:1}).toArray())
+
+
+
+
+
+    def lookUpContent(self):
+        outFile = "".join([self.context.getConfiguration().getIncomingDir(),os.sep,'bischdump.xml'])
+
+        srargs = [ 'curl', self.context.getConfiguration().getUrl() , '--output', outFile]
+        p = SwissbibUtilities.subroutine(srargs)
+
+        #we could test p for not 0
+        #but: because we delete the files in the incomingDir in the initialize phase this should'nt be necessary
+        #and additionaly: we had to check for a lot of possible return values ....
+
+
+
+    def preProcessContent(self):
+        pass
+
+
+
+    def process(self):
+        os.chdir(self.context.getConfiguration().getIncomingDir())
+
+        for fileName in sorted(glob.glob('*' + self.context.getConfiguration().getFileNameSuffix())):
+
+            #change filename
+            #aleph.PRIMO-FULL.20120323.121009.1.tar.gz -> nebis-20120323.121009.1.xml(.gz)
+            #tfileName =  re.sub("aleph\.PRIMO-FULL\.","nebis-",fileName)
+
+            compoundOutputFile =  "".join([self.context.getConfiguration().getNetworkPrefix(),'-', SwissbibUtilities.getCurrentTime(), ".xml"])
+
+            #os.system("cp " + fileName + " " + self.context.getConfiguration().getClusteringDir())
+
+            try:
+
+                wC = FilePushWriteContext(self.context)
+
+                wC.setOutFileName(self.context.getConfiguration().getCollectedDir() + os.sep +  compoundOutputFile)
+                self.context.setWriteContext(wC)
+
+                sfC = BischFileProvider(self.context)
+                sfC.setFileName(fileName)
+
+                self.processFileContent(sfC)
+
+                wC.closeWriteContext()
+
+                self.context.getResultCollector().addProcessedFile(fileName)
+
+                os.chdir(self.context.getConfiguration().getNebisWorking())
+                os.system("mv " + fileName + " " + self.context.getConfiguration().getNebisSrcDir())
+
+            except Exception as pythonBasicException:
+
+                #die alephfiles sollen nochmals verarbeitet werden
+                os.chdir(self.context.getConfiguration().getNebisWorking())
+                os.system("mv *.gz " + self.context.getConfiguration().getIncomingDir())
+                raise pythonBasicException
+            finally:
+                #cleanup the cluster directory for the next file which has to be processed
+                os.system("rm -r " + self.context.getConfiguration().getClusteringDir())
+                os.system("mkdir -p " + self.context.getConfiguration().getClusteringDir())
+
+
+    def transformRecordNamespace(self,contentSingleRecord):
+        return contentSingleRecord
+
+
 
 
 if __name__ == '__main__':

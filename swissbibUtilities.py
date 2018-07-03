@@ -13,6 +13,10 @@ from swissbibHash import HashMarcContent, HashSwissBibMarcContent, HashDcContent
 #import swissbibHash
 import smtplib
 
+import subprocess
+import time
+
+
 
 
 
@@ -226,6 +230,23 @@ class SwissbibUtilities():
 
             operation = None
             raise ErrorHashProcesing("".join(hashError))
+
+    @staticmethod
+    def subroutine(arglist, cwd='.'):
+        """
+        Wraps a call to the run method of package subprocess
+        :param arglist: List with command and arguments
+        :param cwd: Set working directory
+        :return: A CompletedProcess instance
+        """
+        p = subprocess.call(arglist, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        #logging.info(p.stdout.decode("utf-8"))
+        return p
+
+    @staticmethod
+    def getCurrentTime():
+        return time.strftime("%Y%m%d%H%M")
+
 
 
 
