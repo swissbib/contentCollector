@@ -455,6 +455,62 @@ class CreateSummonDeleteMessages(CreateDeletes):
         return False if linenumber == 0 else True
 
 
+
+class CreateBischDeleteMessages(CreateDeletes):
+
+    def __init__(self,
+                 applicationContext=None,  writeContext = None):
+        CreateDeletes.__init__(self,applicationContext=applicationContext, writeContext=writeContext)
+
+        self.pBischDeletedRecordId = re.compile('^\(bisch\)(.*?)$',re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+        self.deletedIDs = []
+
+    def hasOAIDeletes(self):
+
+        dbWrapper = self.applicationContext.getMongoWrapper()
+
+        bischOldIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsOld"]
+        bischNewIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsNew"]
+
+        allOldIds = bischOldIdsCollection.find({})
+
+        for oId in allOldIds:
+            idInCurrentDataset = bischNewIdsCollection.find_one({"_id": oId['_id']})
+            if not idInCurrentDataset:
+                self.deletedIDs.append(oId['_id'])
+
+        return len(self.deletedIDs) > 0
+
+
+
+
+    def filterForCurrentLine(self, linenumber, structure):
+        #summon file with records to be deleted is a CSV structure with the first line as header
+        #possible alternative: look for patterns
+        #return False
+        return False if linenumber == 0 else True
+
+
+    def processDeletes(self):
+
+        for ID in self.deletedIDs:
+
+            self.applicationContext.getResultCollector().addRecordsDeleted(1)
+
+
+            mCbsID = self.pBischDeletedRecordId.search(ID)
+            if mCbsID:
+                recordStructure = self.createXMLDeleteStructure(mCbsID.group(1))
+                self.applicationContext.getWriteContext().writeItem(recordStructure)
+                #we do not write deleted bisch records into database
+
+
+
+
+
+
+
 class CreateNationalLicencesDeleteMessages(CreateDeletes):
     def __init__(self,
                  applicationContext=None, writeContext=None):

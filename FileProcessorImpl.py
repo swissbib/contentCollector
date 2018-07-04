@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import re
 import glob
@@ -1069,19 +1070,22 @@ class FileProcessorBisch(FilePushProcessor):
 
         #todo: I don't know why subroutine doesn't work in this case
         #srargs = [ 'rm ','-r' ,  "".join([ self.context.getConfiguration().getIncomingDir() , os.sep, '*.xml'])]
-        #p = SwissbibUtilities.subroutine(srargs)
-        os.system("rm " + "".join([ self.context.getConfiguration().getIncomingDir() , os.sep, '*.',
+        indir =  "".join([self.context.getConfiguration().getIncomingDir()])
+        #avoid annoying log entries in case there are no files in the incoming directory
+        onlyfiles = [f for f in listdir(indir) if isfile(join(indir, f))]
+        if len(onlyfiles) > 0:
+            #p = SwissbibUtilities.subroutine(srargs)
+            os.system("rm " + "".join([ self.context.getConfiguration().getIncomingDir() , os.sep, '*.',
                                     self.context.getConfiguration().getFileNameSuffix()]))
-
-        #todo query für übertragen der IDs in neue collection
-        #db.bischid.save(db.sourceBISCH.find({},{_id:1}).toArray())
+            #todo query für übertragen der IDs in neue collection
+            #db.bischid.save(db.sourceBISCH.find({},{_id:1}).toArray())
 
 
 
 
 
     def lookUpContent(self):
-        outFile = "".join([self.context.getConfiguration().getIncomingDir(),os.sep,'bischdump.xml'])
+        outFile = "".join([self.context.getConfiguration().getIncomingDir(),os.sep,self.context.getConfiguration().getFilenameDownload()])
 
         srargs = [ 'curl', self.context.getConfiguration().getUrl() , '--output', outFile]
         p = SwissbibUtilities.subroutine(srargs)
@@ -1093,7 +1097,9 @@ class FileProcessorBisch(FilePushProcessor):
 
 
     def preProcessContent(self):
-        pass
+
+        mongoUtility = self.context.getConfiguration().getMongoUtility()
+        mongoUtility.initializeBischIdCollections(self.context)
 
 
 
@@ -1126,7 +1132,7 @@ class FileProcessorBisch(FilePushProcessor):
 
                 self.context.getResultCollector().addProcessedFile(fileName)
 
-                os.chdir(self.context.getConfiguration().getNebisWorking())
+                os.chdir(self.context.getConfiguration().getIncomingDir())
                 os.system("mv " + fileName + " " + self.context.getConfiguration().getNebisSrcDir())
 
             except Exception as pythonBasicException:
@@ -1138,7 +1144,7 @@ class FileProcessorBisch(FilePushProcessor):
             finally:
                 #cleanup the cluster directory for the next file which has to be processed
                 os.system("rm -r " + self.context.getConfiguration().getClusteringDir())
-                os.system("mkdir -p " + self.context.getConfiguration().getClusteringDir())
+                os.system("rm -r " + self.context.getConfiguration().getCollectedDir())
 
 
     def transformRecordNamespace(self,contentSingleRecord):

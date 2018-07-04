@@ -2,7 +2,11 @@ from datetime import datetime
 import os
 import re
 
-from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, PersistNLMongo, PersistSpringerNLMongo, WriteModsForCBS, CleanUpServal, CleanUpHemu
+from harvestingTasks import HarvestingTask, PersistRecordMongo, RecordDirectToSearchEngine, \
+    PersistDNBGNDRecordMongo, PersistInitialDNBGNDRecordMongo, PersistDSV11RecordMongo, \
+    PersistNLMongo, PersistSpringerNLMongo, WriteModsForCBS, CleanUpServal, CleanUpHemu, BischMongoUtility, \
+    PersistBischId
+
 from swissbibUtilities import MongoHostDefinition
 
 
@@ -49,7 +53,7 @@ class HarvestingConfigs():
                           'eMailNotifification','mailServer',
                           'addRecordTimeStamp',
                           'deleteMessagesProcessorType',
-                          'verifyCertificate']
+                          'verifyCertificate', 'mongoUtility']
 
         self.configFileName = filename
         self.tree = etree.parse(self.configFileName)
@@ -84,6 +88,12 @@ class HarvestingConfigs():
                             host = MongoHostDefinition(element)
                             self.hostsDict[element.get("name")] = host
 
+                    elif tag == "mongoUtility":
+                        utility = self.tree.find(".//" + tag)
+                        if not utility is None:
+                            self.mongoUtility = globals()[utility.text]()
+                        else:
+                            self.mongoUtility = None
 
                     if not self.tagsDict[tag] is None :
                         if re.search("\{basedir\}",self.tagsDict[tag]):
@@ -99,12 +109,22 @@ class HarvestingConfigs():
 
 
 
+    def getMongoUtility(self):
+        return self.mongoUtility
+
+    def setMongoUtility(self,value):
+        self._setLXMLTreeNodeValue("mongoUtility", value)
+        self.tagsDict['mongoUtility'] = value
+
+
     def getMailServer(self):
         return self.tagsDict['mailServer']
 
     def setMailServer(self,value):
         self._setLXMLTreeNodeValue("mailServer", value)
         self.tagsDict['mailServer'] = value
+
+
 
     def getVerifyCertificate(self):
         if not self.tagsDict['verifyCertificate'] is None:
@@ -739,7 +759,8 @@ class HarvestingFilesConfigs(HarvestingConfigs):
                                'reroWorking','reroSrcDir',
                                'fileProcessorType','storeLatestProc',
                                 'nlRawDataDir','nlScriptDir',
-                                'nlProcessedDataDir','jats2modsxsl'
+                                'nlProcessedDataDir','jats2modsxsl',
+                                'filenameDownload'
                                ]
 
         for tag in self.validTagsNebis:
@@ -770,6 +791,13 @@ class HarvestingFilesConfigs(HarvestingConfigs):
         self.tagsDict['fileProcessorType'] = value
 
 
+    def getFilenameDownload(self):
+        return self.tagsDict['filenameDownload']
+
+    def setFilenameDownload(self,value):
+        #self.tree.find(".//fileProcessorType").text = value
+        self._setLXMLTreeNodeValue("filenameDownload", value)
+        self.tagsDict['filenameDownload'] = value
 
 
     def getReroWorkingDir(self):

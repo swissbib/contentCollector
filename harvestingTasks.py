@@ -189,6 +189,65 @@ class PersistRecordMongo(HarvestingTask) :
 
 
 
+class BischMongoUtility():
+
+
+    def  createCollectionAvailableIds(self,taskContext=None ):
+
+        dbWrapper = taskContext.getMongoWrapper()
+
+        bischOldIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+        bischsourceCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsOld"]
+        allIds = bischOldIdsCollection.find({},{"_id":1})
+        for oldId in allIds:
+            newElement = {"_id":oldId}
+            bischsourceCollection.insert(newElement)
+
+    def  initializeBischIdCollections(self,taskContext=None ):
+
+        dbWrapper = taskContext.getMongoWrapper()
+        bischsourceCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["sourceDB"]
+
+        bischOldIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsOld"]
+        bischNewIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsNew"]
+
+        bischOldIdsCollection.remove({})
+        bischNewIdsCollection.remove({})
+
+        allIds = bischsourceCollection.find({},{"_id":1})
+        #todo: make batch insert
+        for oldId in allIds:
+            newElement = {"_id":oldId['_id']}
+            bischOldIdsCollection.insert(newElement)
+
+        bischsourceCollection.remove()
+
+
+class PersistBischId(PersistRecordMongo):
+
+
+    def __init__(self):
+        PersistRecordMongo.__init__(self)
+    def  processRecord(self,taskContext=None ):
+
+        dbWrapper = taskContext.getDBWrapper()
+        rid = taskContext.getID()
+
+
+        try:
+
+            bischNewIdsCollection = dbWrapper.getDBConnections()["nativeSources"]["collections"]["bischIDsNew"]
+            newElement = {"_id":rid}
+            bischNewIdsCollection.insert(newElement)
+
+        except Exception as ex:
+            message = ["error while persisting record against Mongo\n",
+                       "docid: ", rid,
+                       "SytemInfo: ", sys.exc_info()]
+            raise ErrorMongoProcessing(message)
+
+
+
 class PersistDNBGNDRecordMongo(PersistRecordMongo):
 
     def __init__(self):
