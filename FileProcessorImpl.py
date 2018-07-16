@@ -1087,7 +1087,8 @@ class FileProcessorBisch(FilePushProcessor):
     def lookUpContent(self):
         outFile = "".join([self.context.getConfiguration().getIncomingDir(),os.sep,self.context.getConfiguration().getFilenameDownload()])
 
-        srargs = [ 'curl', self.context.getConfiguration().getUrl() , '--output', outFile]
+        #srargs = [ 'curl', self.context.getConfiguration().getUrl() , '--output', outFile]
+        srargs = [ 'wget', self.context.getConfiguration().getUrl() ,'-q', '--output-document', outFile]
         p = SwissbibUtilities.subroutine(srargs)
 
         #we could test p for not 0
@@ -1100,6 +1101,14 @@ class FileProcessorBisch(FilePushProcessor):
 
         mongoUtility = self.context.getConfiguration().getMongoUtility()
         mongoUtility.initializeBischIdCollections(self.context)
+
+        os.chdir(self.context.getConfiguration().getIncomingDir())
+
+        for fileName in sorted(glob.glob('*gz')):
+            os.system("gunzip " + fileName)
+
+
+
 
 
 
