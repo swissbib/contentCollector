@@ -102,12 +102,12 @@ def retrieveFromUrlWaitingRequests(wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT,
                   "http": context.getConfiguration().getProxy(),
                   "https": context.getConfiguration().getProxy(),
                 }
-                result  = requests.get(baseURL,params=params,proxies=proxies, verify=certificateVerification)
+                result  = requests.get(baseURL,params=params,proxies=proxies, verify=certificateVerification, allow_redirects=True)
             else:
                 #siehe auch hier
                 #http://docs.python-requests.org/en/latest/user/advanced/
                 #ich brauche noch die Unterstützung von Proxies
-                result  = requests.get(baseURL,params=params,verify=certificateVerification)
+                result  = requests.get(baseURL,params=params,verify=certificateVerification, allow_redirects=True)
                 #result.encoding = 'ISO-8859-1'
 
 
