@@ -33,7 +33,7 @@ LOG_DIR=BASE_DIR  + os.sep + "scriptlog"
 
 wochentag = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag']
 
-tag = wochentag[datetime.today().weekday() + 1]
+tag = wochentag[(datetime.today().weekday() + 1)%7]
 
 if not os.path.exists(DUMP_NAS):
     try:
