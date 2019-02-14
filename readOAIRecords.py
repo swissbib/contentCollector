@@ -76,6 +76,7 @@ try:
     oParser.add_argument("-t", "--timestamp", dest="userDatestamp", default=None)
     oParser.add_argument("-r", "--readTimestamps", dest="queriedTimeStamps", default=None)
     oParser.add_argument("-d", "--docRecordField", dest="docRecordField", default=None )
+    oParser.add_argument("-p", "--purgeDeleted", dest="purgeDeleted", default=False )
 
 
     args = oParser.parse_args()
@@ -124,7 +125,8 @@ try:
                                     fileSize=args.fileSize, outDir=args.outDir,condition=args.condition,
                                     inputFile=args.inputFile,
                                     userDatestamp=args.userDatestamp,
-                                    docRecordField=args.docRecordField
+                                    docRecordField=args.docRecordField,
+                                    purgeDeleted=args.purgeDeleted
                                 )
 
 

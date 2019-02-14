@@ -262,6 +262,9 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
         self.userDateStamp = None
         self.pRecordUserDatestamp = re.compile("(.*?<datestamp>).*?(</datestamp>.*)",re.UNICODE | re.DOTALL | re.IGNORECASE)
 
+        self.pRecordDeleted = re.compile("deleted|newdeleted",re.UNICODE | re.DOTALL | re.IGNORECASE)
+
+
 
 
     def readRecordsWithTimeStamp(self, startDate=None, endDate=None, outDir=None, fileSize=None, countToRead = None):
@@ -361,7 +364,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
 
 
     def readRecords(self,rId=None,countToRead=None,fileSize=None,outDir=None,condition=None,
-                    inputFile=None,userDatestamp=None, docRecordField=None):
+                    inputFile=None,userDatestamp=None, docRecordField=None, purgeDeleted=False):
 
         self.userDateStamp = userDatestamp
 
@@ -477,10 +480,15 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
+
+                    if purgeDeleted and self.pRecordDeleted.match(document['status']):
+                        continue
+
+
                     docFieldName = docRecordField is not None and docRecordField or "record"
                     r = document[docFieldName]
 
-                    #r = document["record"]
+
                     fileToWrite.write(self.setCustomDatestamp(zlib.decompress(r) + "\n"))
 
                     alreadyRead +=1
@@ -503,6 +511,11 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 for document in result:
                     if countToRead is not None and alreadyRead >= int(countToRead):
                         break
+
+                    if purgeDeleted and self.pRecordDeleted.match(document['status']):
+                        continue
+
+
                     docFieldName = docRecordField is not None and docRecordField or "record"
                     r = document[docFieldName]
 
@@ -765,8 +778,6 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 return "".join([sRecord.group(1),self.userDateStamp, sRecord.group(2)])
         else:
             return record
-
-
 
 
 
