@@ -420,6 +420,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                                 if (size > forCompare):
                                     self.writeFooter(fileToWrite)
                                     fileToWrite.close()
+                                    os.system("gzip " + self.currentOutFile)
                                     outfile = self.defineOutPutFile(outDir)
                                     fileToWrite = None
                                     fileToWrite = open(outfile,"w")
@@ -440,9 +441,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
             if (fileToWrite is not None):
                 self.writeFooter(fileToWrite)
                 fileToWrite.close()
-
-
-
+                os.system("gzip " + self.currentOutFile)
 
         else:
 
@@ -495,6 +494,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                 self.writeFooter(fileToWrite)
                 fileToWrite.flush()
                 fileToWrite.close()
+                os.system("gzip " + self.currentOutFile)
 
             else:
 
@@ -537,8 +537,8 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                         self.writeFooter(fileToWrite)
                         fileToWrite.flush()
                         fileToWrite.close()
+                        os.system("gzip " + self.currentOutFile)
                         outfile = self.defineOutPutFile(outDir)
-                        fileToWrite = None
                         fileToWrite = open(outfile,"w")
                         self.writeHeader(fileToWrite)
 
@@ -548,9 +548,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                     self.writeFooter(fileToWrite)
                     fileToWrite.flush()
                     fileToWrite.close()
-
-
-
+                    os.system("gzip " + self.currentOutFile)
 
     def tokenizeCondition(self,condition):
 
@@ -682,7 +680,7 @@ class MongoDBHarvestingWrapperAdmin(MongoDBHarvestingWrapper):
                                     "-","export.",
                                     '{:%Y%m%d%H%M%S}'.format(datetime.now()),
                                     ".xml"])
-
+        self.currentOutFile = outfile
         return outfile
 
     def checkAndCreateOutDir(self,outdir):
