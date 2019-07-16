@@ -132,9 +132,9 @@ class FileProcessor(SwissbibPreImportProcessor):
                         continue
 
 
-                substituteChars = self.context.getConfiguration().getSubstituteCharacters()
-                if not substituteChars is None:
-                    contentSingleRecord = re.sub(substituteChars," ",contentSingleRecord)
+                #substituteChars = self.context.getConfiguration().getSubstituteCharacters()
+                #if not substituteChars is None:
+                #    contentSingleRecord = re.sub(substituteChars," ",contentSingleRecord)
 
 
                 try:
