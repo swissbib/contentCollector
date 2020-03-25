@@ -1,30 +1,36 @@
 #!/bin/bash
 
 
-BASE_DIR=/var/swissbib/mongo
-#BASE_DIR=/home/swissbib/temp/testBackupMongo
+BASEDIR=/swissbib_index
 
-MONGODB_BASEDIR=/usr/local/swissbib/mongodb
+MONGODB_BASEDIR=$BASEDIR/mongo
 
-DUMP_DIR=$BASE_DIR/dump
+SB_BASEDIR=$MONGODB_BASEDIR/scripts
+
+
+DUMP_DIR=$MONGODB_BASEDIR/dump
 #DUMP_NAS=/var/swissbib/dbbu/mongo/dump
 #DUMP_NAS=/var/swissbib/dbbu/mongo
-LOG_DIR=$BASE_DIR/scriptlog
+LOG_DIR=$SB_BASEDIR/scriptlog
 CURRENT_TIMESTAMP=`date +%Y%m%d%H%M%S`
 LOGFILE=$LOG_DIR/backup.$CURRENT_TIMESTAMP.log
 
 CURRENT_TIMESTAMP=`date +%Y%m%d%H%M%S`
 #DBPATH=/home/swissbib/environment/data/mongo/db
-DBPATH=/var/swissbib/mongo/localdbs
+DBPATH=$MONGODB_BASEDIR/localdbs
 
-function setTimestamp()
+# Alle Mongohosts brauchen das Passwort des DB admin-users im Klartext mod 600 swissbib hier:
+
+if [ -f $MONGODB_BASEDIR/pw ]; then
+
+setTimestamp()
 {
     CURRENT_TIMESTAMP=`date +%Y%m%d%H%M%S`
 }
 
 
 
-function initialize()
+initialize()
 {
     printf "clear dump dir ....\n\n" >> $LOGFILE 2>&1
 
@@ -34,10 +40,8 @@ function initialize()
     fi
 
     if [ "$(ls -A $DUMP_DIR)" ]; then
-#     setTimestamp
      printf "Start deleting previous DB dump at $CURRENT_TIMESTAMP\n\n" >> $LOGFILE 2>&1
      rm -rf $DUMP_DIR/*
-#     setTimestamp
 #     printf "Finished deleting previous DB dump at $CURRENT_TIMESTAMP\n\n" >> $LOGFILE 2>&1
     fi
 }
@@ -53,44 +57,29 @@ function initialize()
 
     initialize
 
-    $MONGODB_BASEDIR/bin/stop.mongo.sh >> $LOGFILE 2>&1
-    #stop.mongo.sh >> $LOGFILE 2>&1
-
-
-    printf "mongod instance on port 29017 is now down....\n\n" >> $LOGFILE
-
-    #mongodump --dbpath $DBPATH --out $DUMP_DIR/localdbs >> $LOGFILE 2>&1
-    mongodump --dbpath $DBPATH --out $DUMP_DIR >> $LOGFILE 2>&1
-
-
-    #initialize
-
-    #su -c "mongodump --dbpath $BASE_DIR/localdbs --out $DUMP_DIR/localdbs" swissbib >> $LOGFILE 2>&1
+    mongodump --host "$(hostname -A)":29017 -u admin -p "$(cat $MONGODB_BASEDIR/pw)" --out $DUMP_DIR >> $LOGFILE 2>&1
 
     setTimestamp
     printf "dump of localdbs has been finished succesfully at $CURRENT_TIMESTAMP ....\n\n" >> $LOGFILE
 
-    printf "now going to restart mongod instance on port 29017 ....\n\n" >> $LOGFILE
 
-    $MONGODB_BASEDIR/bin/start.mongo.sh >> $LOGFILE 2>&1
-    #start.mongo.sh >> $LOGFILE 2>&1
+#    sudo systemctl start mongod.service >> $LOGFILE 2>&1
 
-    printf "mongod instance on port 29017 is again up and running - Congratulations....\n\n" >> $LOGFILE
+##    printf "Copying dump to NAS using a dedicated python script.\n\n" >> $LOGFILE
 
-    printf "Copying dump to NAS using a dedicated python script.\n\n" >> $LOGFILE
-
-    cd $BASE_DIR/bin
-    python $BASE_DIR/bin/copyDumpedMongoCollections.py >> $LOGFILE
+##    cd $SB_BASEDIR/bin
+    python $SB_BASEDIR/bin/copyDumpedMongoCollections.py >> $LOGFILE
     #rsync -aq --delete $DUMP_DIR/localdbs $DUMP_NAS >> $LOGFILE 2>&1
 
     setTimestamp
     printf "All done at $CURRENT_TIMESTAMP !\n\n" >> $LOGFILE
     gzip $LOGFILE
 
-#else
+else
 #    echo "you have to be root to start this script ...\n"
-#    exit 1
-#fi
+    echo "no dbpw found at $MONGODB_BASEDIR/pw ...\n"
+    exit 1
+fi
 
 
 

@@ -20,20 +20,21 @@ formatTimestamp = '%Y-%m-%d %H:%M:%S %Z'
 print "now start of rsync mechanism with Python - script at " + datetime.now().strftime(formatTimestamp)
 
 
-BASE_DIR="/var/swissbib/mongo"
-#BASE_DIR= os.sep + "home" + os.sep + "swissbib" + os.sep + "temp" + os.sep + "testBackupMongo"
+BASE_DIR="/swissbib_index/mongo"
 DUMP_DIR=BASE_DIR + os.sep + "dump"
+
+BASE_DIR_SCRIPT=BASE_DIR + os.sep + "scripts"
 
 #DUMP_NAS=/var/swissbib/dbbu/mongo/dump
 #Test
 DUMP_NAS="/var/swissbib/dbbu/mongo/swissbibRawDataMongo"
 #DUMP_NAS=BASE_DIR + os.sep +  "swissbibRawDataMongo"
 #LOG_DIR=BASE_DIR  + "/scriptlog"
-LOG_DIR=BASE_DIR  + os.sep + "scriptlog"
+LOG_DIR=BASE_DIR_SCRIPT  + os.sep + "scriptlog"
 
 wochentag = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag']
 
-tag = wochentag[(datetime.today().weekday() + 1)%7]
+tag = wochentag[datetime.today().weekday() + 1]
 
 if not os.path.exists(DUMP_NAS):
     try:
