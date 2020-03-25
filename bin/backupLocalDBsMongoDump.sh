@@ -57,7 +57,7 @@ initialize()
 
     initialize
 
-    mongodump --host "$(hostname -A)":29017 -u admin -p "$(cat $MONGODB_BASEDIR/pw)" --out $DUMP_DIR >> $LOGFILE 2>&1
+    mongodump --host "$(hostname -a)":29017 -u admin -p "$(cat $MONGODB_BASEDIR/pw)" --out $DUMP_DIR >> $LOGFILE 2>&1
 
     setTimestamp
     printf "dump of localdbs has been finished succesfully at $CURRENT_TIMESTAMP ....\n\n" >> $LOGFILE
