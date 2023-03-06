@@ -31,7 +31,7 @@ for repo in ${repos}; do
 
   CONFIG=${CONFDIR}/config.${repo}.prod.xml
 
-  python  ${PROCESS_DIR}/swissbibHarvesting.py --config=${CONFIG} >> ${RUNDIR}/process-harvesting-python.log 2>&1
+  /home/harvester/.pyenv/versions/2.7.18/envs/venv-contentCollector/bin/python  ${PROCESS_DIR}/swissbibHarvesting.py --config=${CONFIG} >> ${RUNDIR}/process-harvesting-python.log 2>&1
 
   rm ${LOCKFILE}
 
