@@ -1,4 +1,4 @@
-oaipmh
+pyoai
 lxml
-bson
 pymongo
+requests
